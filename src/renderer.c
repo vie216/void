@@ -55,7 +55,7 @@ void renderer_render_debug_info(Renderer *renderer, bool full_redraw) {
 void renderer_render_status_bar(Renderer *renderer, Buffer *buffer) {
   u32 row = buffer->row + 1;
   u32 col = buffer->col + 1;
-  printf("\033[%d;%dH\033[K%d:%d", renderer->rows,
+  printf("\033[%d;%dH\033[2K%d:%d", renderer->rows,
          renderer->cols - NUM_LEN(row) - NUM_LEN(col) - 1,
          row, col);
 }
