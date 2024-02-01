@@ -36,6 +36,7 @@ u32 buffer_visual_col(Buffer *buffer) {
 void buffer_insert(Buffer *buffer, char input) {
   DA_INSERT(*buffer_line(buffer), input, buffer->col);
   buffer->col++;
+  buffer->persist_col = buffer->col;
   buffer->dirty = true;
 }
 
@@ -57,6 +58,7 @@ void buffer_insert_new_line(Buffer *buffer) {
           rest_len);
 
   buffer->col = 0;
+  buffer->persist_col = 0;
   buffer->dirty = true;
 }
 
@@ -80,6 +82,7 @@ void buffer_delete_before_cursor(Buffer *buffer) {
     prev_line->len += growth_amount;
   }
 
+  buffer->persist_col = buffer->col;
   buffer->dirty = true;
 }
 
@@ -90,6 +93,8 @@ void buffer_move_left(Buffer *buffer) {
     buffer->row--;
     buffer->col = buffer_line(buffer)->len;
   }
+
+  buffer->persist_col = buffer->col;
 }
 
 void buffer_move_right(Buffer *buffer) {
@@ -99,6 +104,8 @@ void buffer_move_right(Buffer *buffer) {
     buffer->row++;
     buffer->col = 0;
   }
+
+  buffer->persist_col = buffer->col;
 }
 
 void buffer_move_up(Buffer *buffer) {
@@ -107,8 +114,10 @@ void buffer_move_up(Buffer *buffer) {
 
     buffer->row--;
     buffer->col += buffer_visual_offset_between_lines(buffer, prev_line);
-    if (buffer->col > buffer_line(buffer)->len)
+    if (buffer->persist_col > buffer_line(buffer)->len)
       buffer->col = buffer_line(buffer)->len;
+    else
+      buffer->col = buffer->persist_col;
   }
 }
 
@@ -118,8 +127,10 @@ void buffer_move_down(Buffer *buffer) {
 
     buffer->row++;
     buffer->col += buffer_visual_offset_between_lines(buffer, prev_line);
-    if (buffer->col > buffer_line(buffer)->len)
+    if (buffer->persist_col > buffer_line(buffer)->len)
       buffer->col = buffer_line(buffer)->len;
+    else
+      buffer->col = buffer->persist_col;
   }
 }
 
@@ -133,6 +144,7 @@ void buffer_indent(Buffer *buffer) {
     buffer->col += TAB_WIDTH;
   }
 
+  buffer->persist_col = buffer->col;
   buffer->dirty = true;
 }
 
@@ -152,6 +164,7 @@ void buffer_unindent(Buffer *buffer) {
     }
   }
 
+  buffer->persist_col = buffer->col;
   buffer->dirty = true;
 }
 

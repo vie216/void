@@ -6,7 +6,6 @@ typedef struct {
   bool dirty;
 } LineInfo;
 
-/* TODO: scrolling */
 typedef struct {
   char     *buffer;
   LineInfo *line_infos;

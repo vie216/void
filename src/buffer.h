@@ -12,6 +12,7 @@ typedef struct {
   Line *items;
   u32   len, cap;
   u32   row, col;
+  u32   persist_col;
   bool  dirty;
 } Buffer;
 
