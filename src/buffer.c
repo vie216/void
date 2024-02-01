@@ -2,6 +2,7 @@
 
 #include "buffer.h"
 #include "config.h"
+#include "fs.h"
 
 Line *buffer_line(Buffer *buffer) {
   return buffer->items + buffer->row;
@@ -35,13 +36,12 @@ u32 buffer_visual_col(Buffer *buffer) {
 void buffer_insert(Buffer *buffer, char input) {
   DA_INSERT(*buffer_line(buffer), input, buffer->col);
   buffer->col++;
-  buffer_line(buffer)->dirty = true;
 }
 
 void buffer_insert_new_line(Buffer *buffer) {
   u32 rest_len = buffer_line(buffer)->len - buffer->col;
   Line new_line = (Line) {
-    .items = malloc(rest_len * sizeof(char)),
+    .items = malloc(rest_len),
     .len = rest_len,
     .cap = rest_len,
   };
@@ -53,19 +53,15 @@ void buffer_insert_new_line(Buffer *buffer) {
   Line *line = buffer->items + buffer->row - 1;
   memmove(new_line.items,
           line->items + buffer->col,
-          sizeof(char) * rest_len);
+          rest_len);
 
   buffer->col = 0;
-
-  for (u32 i = buffer->row - 1; i < buffer->len; ++i)
-    buffer->items[i].dirty = true;
 }
 
 void buffer_delete_before_cursor(Buffer *buffer) {
   if (buffer->col > 0) {
     buffer->col--;
     DA_REMOVE(*buffer_line(buffer), buffer->col);
-    buffer_line(buffer)->dirty = true;
   } else if (buffer->row > 0) {
     Line *prev_line = buffer->items + buffer->row - 1;
     u32 growth_amount = buffer_line(buffer)->len;
@@ -73,15 +69,13 @@ void buffer_delete_before_cursor(Buffer *buffer) {
     DA_RESERVE_SPACE(*prev_line, growth_amount);
     memmove(prev_line->items + prev_line->len,
             buffer_line(buffer)->items,
-            sizeof(char) * growth_amount);
-    prev_line->len += growth_amount;
+            growth_amount);
+    free(buffer->items[buffer->row].items);
     DA_REMOVE(*buffer, buffer->row);
 
     buffer->row--;
     buffer->col = prev_line->len;
-
-    for (u32 i = buffer->row; i < buffer->len; ++i)
-      buffer->items[i].dirty = true;
+    prev_line->len += growth_amount;
   }
 }
 
@@ -134,8 +128,6 @@ void buffer_indent(Buffer *buffer) {
       DA_INSERT(*buffer_line(buffer), ' ', 0);
     buffer->col += TAB_WIDTH;
   }
-
-  buffer_line(buffer)->dirty = true;
 }
 
 void buffer_unindent(Buffer *buffer) {
@@ -153,6 +145,50 @@ void buffer_unindent(Buffer *buffer) {
       buffer->col--;
     }
   }
+}
 
-  buffer_line(buffer)->dirty = true;
+void buffer_read_file(Buffer *buffer, char *path) {
+  u32   file_len = 0;
+  char *file_content = read_file(path, &file_len);
+  u32   line_start = 0;
+
+  for (u32 i = 0; i <= file_len; ++i) {
+    if (i == file_len || file_content[i] == '\n') {
+      u32 line_len = i - line_start;
+      Line line = (Line) {
+        .items = malloc(line_len),
+        .len = line_len,
+        .cap = line_len,
+      };
+
+      DA_APPEND(*buffer, line);
+      memmove(line.items,
+              file_content + line_start,
+              line_len);
+      line_start = i + 1;
+    }
+  }
+}
+
+void buffer_write_file(Buffer *buffer, char *path) {
+  u32 content_len = buffer->len;
+  for (u32 row = 0; row < buffer->len; ++row)
+    content_len += buffer->items[row].len;
+
+  char *content = malloc(content_len);
+  u32 offset = 0;
+  for (u32 row = 0; row < buffer->len; ++row) {
+    if (row != 0)
+      content[offset++] = '\n';
+
+    Line *line = buffer->items + row;
+    memmove(content + offset, line->items, line->len);
+    offset += line->len;
+  }
+  content[content_len - 1] = '\0';
+
+  FILE *file = fopen(path, "w");
+  fputs(content, file);
+  fclose(file);
+  free(content);
 }

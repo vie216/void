@@ -6,7 +6,6 @@
 typedef struct {
   char *items;
   u32   len, cap;
-  bool  dirty;
 } Line;
 
 typedef struct {
@@ -26,5 +25,7 @@ void buffer_move_down(Buffer *buffer);
 void buffer_indent(Buffer *buffer);
 void buffer_unindent(Buffer *buffer);
 void buffer_process_input(Buffer *buffer, u8 input);
+void buffer_read_file(Buffer *buffer, char *path);
+void buffer_write_file(Buffer *buffer, char *path);
 
 #endif // BUFFER_H

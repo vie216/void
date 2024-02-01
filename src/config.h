@@ -2,4 +2,4 @@
 
 #define TAB_STR   "  "
 #define TAB_WIDTH (sizeof(TAB_STR) - 1)
-#define HARD_TABS true
+#define HARD_TABS false

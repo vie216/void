@@ -5,25 +5,28 @@
 #include <string.h>
 
 #define ARRAY_LEN(array) (sizeof(array) / sizeof(array[0]))
-#define DA_RESERVE_SPACE(da, amount)                       \
-  do {                                                     \
-    u32 size = sizeof((da).items[0]);                      \
-    if ((da).cap < (da).len + (amount)) {                  \
-      if ((da).cap) {                                      \
-        while ((da).cap < (da).len + (amount))             \
-          (da).cap *= 2;                                   \
-        (da).items = realloc((da).items, size * (da).cap); \
-      } else {                                             \
-        (da).cap = 1;                                      \
-        (da).items = malloc(size * (da).cap);              \
-      }                                                    \
-    }                                                      \
+
+#define DA_RESERVE_SPACE(da, amount)                                \
+  do {                                                              \
+    u32 size = sizeof((da).items[0]);                               \
+    if ((da).cap < (da).len + amount) {                             \
+      if ((da).cap != 0) {                                          \
+        while ((da).cap < (da).len + amount)                        \
+          (da).cap *= 2;                                            \
+        (da).items = realloc((da).items, size * (da).cap);          \
+      } else {                                                      \
+        (da).cap = 1;                                               \
+        (da).items = malloc(size * (da).cap);                       \
+      }                                                             \
+    }                                                               \
   } while (0)
+
 #define DA_APPEND(da, element)        \
   do {                                \
     DA_RESERVE_SPACE(da, 1);          \
     (da).items[(da).len++] = element; \
   } while (0)
+
 #define DA_INSERT(da, element, index)      \
   do {                                     \
     u32 size = sizeof((da).items[0]);      \
@@ -33,6 +36,7 @@
            size * ((da).len++ - (index))); \
     (da).items[index] = element;           \
   } while (0)
+
 #define DA_REMOVE(da, index)                   \
   do {                                         \
     u32 size = sizeof((da).items[0]);          \
