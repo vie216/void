@@ -58,13 +58,13 @@ void renderer_render_debug_info(Renderer *renderer, bool full_redraw) {
 }
 #endif
 
-#define NUM_LEN(num) (num == 0 ? 1 : (i32) (log10(num) + 1))
+#define UINT_LEN(num) (num < 10 ? 1 : (u32) (log10(num) + 1))
 
 void renderer_render_status_bar(Renderer *renderer, Buffer *buffer) {
   u32 row = buffer->row + 1;
   u32 col = buffer->col + 1;
   printf("\033[%d;%dH\033[2K%d:%d", renderer->rows,
-         renderer->cols - NUM_LEN(row) - NUM_LEN(col) - 1,
+         renderer->cols - UINT_LEN(row) - UINT_LEN(col) - 2,
          row, col);
 }
 
@@ -119,12 +119,9 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
 #endif
   }
 
-  if (buffer->len < renderer->prev_buffer_len) {
-    for (u32 row = buffer->len; row < renderer->prev_buffer_len; ++row) {
-      putc('\n', stdout);
-      fputs("\033[K", stdout);
-    }
-  }
+  if (buffer->len < renderer->prev_buffer_len)
+    for (u32 row = buffer->len; row < renderer->prev_buffer_len; ++row)
+      fputs("\n\033[K", stdout);
 
   buffer->dirty = false;
   renderer->prev_buffer_len = buffer->len;
