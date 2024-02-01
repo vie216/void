@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/ioctl.h>
+#include <math.h>
 
 #include "renderer.h"
 #include "config.h"
@@ -41,13 +42,23 @@ void renderer_render_line(Renderer *renderer, Line *line, u32 _row) {
 
 #ifndef NDEBUG
 void renderer_render_debug_info(Renderer *renderer, bool full_redraw) {
-  printf("\033[%d;0H\033[K", renderer->rows);
+  printf("\033[%d;1H\033[K", renderer->rows - 1);
   u32 col = 0;
   for (u32 row = 0; row < renderer->rows && col + 3 < renderer->cols; ++row)
     if (renderer->line_infos[row].dirty || full_redraw)
       col += printf("%d ", row);
 }
 #endif
+
+#define NUM_LEN(num) (num == 0 ? 1 : (i32) (log10(num) + 1))
+
+void renderer_render_status_bar(Renderer *renderer, Buffer *buffer) {
+  u32 row = buffer->row + 1;
+  u32 col = buffer->col + 1;
+  printf("\033[%d;%dH\033[K%d:%d", renderer->rows,
+         renderer->cols - NUM_LEN(row) - NUM_LEN(col) - 1,
+         row, col);
+}
 
 void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
   struct winsize ws;
@@ -71,7 +82,7 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
   }
 
   fputs("\033[H", stdout);
-  for (u32 row = 0; row < renderer->rows && row < buffer->len; ++row) {
+  for (u32 row = 0; row + 1 < renderer->rows && row < buffer->len; ++row) {
     if (buffer->dirty || full_redraw)
       renderer_render_line(renderer, buffer->items + row, row);
 
@@ -96,6 +107,8 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
 
   buffer->dirty = false;
   renderer->prev_buffer_len = buffer->len;
+
+  renderer_render_status_bar(renderer, buffer);
 
 #ifndef NDEBUG
   renderer_render_debug_info(renderer, full_redraw);
