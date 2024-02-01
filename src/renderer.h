@@ -1,0 +1,23 @@
+#include "defs.h"
+#include "buffer.h"
+
+typedef struct {
+  u32  len, height;
+  u32  visual_row;
+  bool dirty;
+} LineInfo;
+
+/* TODO: scrolling */
+typedef struct {
+  char     *buffer;
+  LineInfo *line_infos;
+  u32       rows, cols, cap;
+  u32       visual_row;
+} Renderer;
+
+void renderer_render_line(Renderer *renderer, Line *line,
+                          u32 _row, u32 *visual_row);
+#ifndef NDEBUG
+void renderer_render_debug_info(Renderer *renderer, bool full_redraw);
+#endif
+void renderer_render_buffer(Renderer *renderer, Buffer *buffer);
