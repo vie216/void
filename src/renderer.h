@@ -3,7 +3,6 @@
 
 typedef struct {
   u32  len, height;
-  u32  visual_row;
   bool dirty;
 } LineInfo;
 
@@ -12,11 +11,10 @@ typedef struct {
   char     *buffer;
   LineInfo *line_infos;
   u32       rows, cols, cap;
-  u32       visual_row;
+  u32       prev_buffer_len;
 } Renderer;
 
-void renderer_render_line(Renderer *renderer, Line *line,
-                          u32 _row, u32 *visual_row);
+void renderer_render_line(Renderer *renderer, Line *line, u32 _row);
 #ifndef NDEBUG
 void renderer_render_debug_info(Renderer *renderer, bool full_redraw);
 #endif

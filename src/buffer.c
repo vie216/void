@@ -36,6 +36,7 @@ u32 buffer_visual_col(Buffer *buffer) {
 void buffer_insert(Buffer *buffer, char input) {
   DA_INSERT(*buffer_line(buffer), input, buffer->col);
   buffer->col++;
+  buffer->dirty = true;
 }
 
 void buffer_insert_new_line(Buffer *buffer) {
@@ -56,6 +57,7 @@ void buffer_insert_new_line(Buffer *buffer) {
           rest_len);
 
   buffer->col = 0;
+  buffer->dirty = true;
 }
 
 void buffer_delete_before_cursor(Buffer *buffer) {
@@ -77,6 +79,8 @@ void buffer_delete_before_cursor(Buffer *buffer) {
     buffer->col = prev_line->len;
     prev_line->len += growth_amount;
   }
+
+  buffer->dirty = true;
 }
 
 void buffer_move_left(Buffer *buffer) {
@@ -128,6 +132,8 @@ void buffer_indent(Buffer *buffer) {
       DA_INSERT(*buffer_line(buffer), ' ', 0);
     buffer->col += TAB_WIDTH;
   }
+
+  buffer->dirty = true;
 }
 
 void buffer_unindent(Buffer *buffer) {
@@ -145,6 +151,8 @@ void buffer_unindent(Buffer *buffer) {
       buffer->col--;
     }
   }
+
+  buffer->dirty = true;
 }
 
 void buffer_read_file(Buffer *buffer, char *path) {
@@ -168,6 +176,8 @@ void buffer_read_file(Buffer *buffer, char *path) {
       line_start = i + 1;
     }
   }
+
+  buffer->dirty = true;
 }
 
 void buffer_write_file(Buffer *buffer, char *path) {

@@ -4,8 +4,7 @@
 #include "renderer.h"
 #include "config.h"
 
-void renderer_render_line(Renderer *renderer, Line *line,
-                          u32 _row, u32 *visual_row) {
+void renderer_render_line(Renderer *renderer, Line *line, u32 _row) {
   LineInfo *info = renderer->line_infos + _row;
   u32 height = 1;
   u32 col = 0;
@@ -34,20 +33,19 @@ void renderer_render_line(Renderer *renderer, Line *line,
   }
 
   info->dirty = info->dirty ||
-    height != info->height ||
-    *visual_row != info->visual_row;
+    line->len != info->len ||
+    height != info->height;
   info->len = line->len;
   info->height = height;
-  info->visual_row = *visual_row;
-  *visual_row += height;
 }
 
 #ifndef NDEBUG
 void renderer_render_debug_info(Renderer *renderer, bool full_redraw) {
   printf("\033[%d;0H\033[K", renderer->rows);
-  for (u32 row = 0; row < renderer->rows; ++row)
+  u32 col = 0;
+  for (u32 row = 0; row < renderer->rows && col + 3 < renderer->cols; ++row)
     if (renderer->line_infos[row].dirty || full_redraw)
-      printf("%d ", row);
+      col += printf("%d ", row);
 }
 #endif
 
@@ -57,43 +55,53 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
 
   ioctl(1, TIOCGWINSZ, &ws);
   if (renderer->rows != ws.ws_row || renderer->cols != ws.ws_col) {
-    renderer->buffer = realloc(renderer->buffer, ws.ws_row * ws.ws_col);
-    renderer->line_infos = realloc(renderer->line_infos, ws.ws_row * sizeof(LineInfo));
+    if (renderer->cap == 0) {
+      free(renderer->buffer);
+      free(renderer->line_infos);
+    }
+    renderer->buffer = malloc(ws.ws_row * ws.ws_col);
+    renderer->line_infos = malloc(ws.ws_row * sizeof(LineInfo));
     renderer->rows = ws.ws_row;
     renderer->cols = ws.ws_col;
     renderer->cap = renderer->rows * renderer->cols;
 
-    memset(renderer->buffer, ' ', ws.ws_row * ws.ws_col);
+    memset(renderer->buffer, ' ', renderer->cap);
+    memset(renderer->line_infos, 0, ws.ws_row * sizeof(LineInfo));
     full_redraw = true;
   }
 
-  u32 visual_row = 0;
-  for (u32 row = 0; row < buffer->len && row < renderer->rows; ++row)
-    renderer_render_line(renderer, buffer->items + row, row, &visual_row);
-
-#ifndef NDEBUG
-  renderer_render_debug_info(renderer, full_redraw);
-#endif
-
   fputs("\033[H", stdout);
-  for (u32 row = 0; row < renderer->rows; ++row) {
+  for (u32 row = 0; row < renderer->rows && row < buffer->len; ++row) {
+    if (buffer->dirty || full_redraw)
+      renderer_render_line(renderer, buffer->items + row, row);
+
     if (row != 0)
       putc('\n', stdout);
+
     if (renderer->line_infos[row].dirty || full_redraw)
       for (u32 col = 0; col < renderer->cols; ++col)
         putc(renderer->buffer[row * renderer->cols + col], stdout);
+
+#ifdef NDEBUG
     renderer->line_infos[row].dirty = false;
+#endif
   }
 
-  if (visual_row < renderer->visual_row) {
-    for (u32 row = visual_row; row < renderer->visual_row; ++row) {
-      if (row != visual_row)
-        putc('\n', stdout);
+  if (buffer->len < renderer->prev_buffer_len) {
+    for (u32 row = buffer->len; row < renderer->prev_buffer_len; ++row) {
+      putc('\n', stdout);
       fputs("\033[K", stdout);
     }
   }
 
-  renderer->visual_row = visual_row;
+  buffer->dirty = false;
+  renderer->prev_buffer_len = buffer->len;
+
+#ifndef NDEBUG
+  renderer_render_debug_info(renderer, full_redraw);
+  for (u32 row = 0; row < renderer->rows && row < buffer->len; ++row)
+    renderer->line_infos[row].dirty = false;
+#endif
 
   printf("\033[%d;%dH",
          buffer->row + 1,

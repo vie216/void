@@ -12,6 +12,7 @@ typedef struct {
   Line *items;
   u32   len, cap;
   u32   row, col;
+  bool  dirty;
 } Buffer;
 
 u32  buffer_visual_col(Buffer *buffer);
