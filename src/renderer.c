@@ -35,8 +35,8 @@ void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 row) {
            ' ', info->len - line->len);
   }
 
-  info->len = line->len;
   info->dirty = info->dirty || line->len != info->len;
+  info->len = line->len;
 }
 
 #ifndef NDEBUG
@@ -94,15 +94,19 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
   }
 
   if (buffer->dirty || full_redraw) {
-    u32 row = 0;
-    while (row + renderer->scroll < buffer->len && row + 1 < renderer->rows) {
+    for (u32 row = 0;
+         row + renderer->scroll < buffer->len &&
+           row + 1 < renderer->rows;
+         ++row) {
       renderer_render_line(renderer, buffer, row);
-      row++;
     }
   }
 
   fputs("\033[H", stdout);
-  for (u32 row = 0; row < renderer->rows && row + 1 < renderer->rows; ++row) {
+  for (u32 row = 0;
+       row + renderer->scroll < buffer->len &&
+         row + 1 < renderer->rows;
+       ++row) {
     if (row != 0)
       putc('\n', stdout);
 
