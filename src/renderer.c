@@ -119,7 +119,10 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
 #endif
   }
 
-  if (buffer->len < renderer->prev_buffer_len)
+  if (full_redraw)
+    for (u32 row = buffer->len; row < renderer->rows; ++row)
+      fputs("\n\033[K", stdout);
+  else if (buffer->len < renderer->prev_buffer_len)
     for (u32 row = buffer->len; row < renderer->prev_buffer_len; ++row)
       fputs("\n\033[K", stdout);
 
