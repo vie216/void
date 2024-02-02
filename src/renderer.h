@@ -2,7 +2,7 @@
 #include "buffer.h"
 
 typedef struct {
-  u32  len, height;
+  u32  len;
   bool dirty;
 } LineInfo;
 
@@ -14,7 +14,7 @@ typedef struct {
   u32       scroll;
 } Renderer;
 
-void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 _row);
+void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 row);
 #ifndef NDEBUG
 void renderer_render_debug_info(Renderer *renderer, bool full_redraw);
 #endif

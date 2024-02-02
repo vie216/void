@@ -5,20 +5,16 @@
 #include "renderer.h"
 #include "config.h"
 
-void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 _row) {
-  if (_row + renderer->scroll >= buffer->len)
-    return;
-
-  LineInfo *info = renderer->line_infos + _row;
-  Line *line = buffer->items + _row + renderer->scroll;
-  u32 height = 1;
+void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 row) {
+  LineInfo *info = renderer->line_infos + row;
+  Line *line = buffer->items + row + renderer->scroll;
   u32 col = 0;
 
   while (col < line->len && col < renderer->cap) {
-    u32 offset = _row * renderer->cols + col;
-
     if (col != 0 && col % renderer->cols == 0)
-      height++;
+      break;
+
+    u32 offset = row * renderer->cols + col;
 
     if (line->items[col] == '\t') {
       if (renderer->cap - col > TAB_WIDTH)
@@ -34,18 +30,13 @@ void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 _row) {
   }
 
   if (line->len < info->len) {
-    u32 offset = _row * renderer->cols + line->len;
-
-    info->dirty = true;
+    u32 offset = row * renderer->cols + line->len;
     memset(renderer->buffer + offset,
            ' ', info->len - line->len);
   }
 
-  info->dirty = info->dirty ||
-    line->len != info->len ||
-    height != info->height;
   info->len = line->len;
-  info->height = height;
+  info->dirty = info->dirty || line->len != info->len;
 }
 
 #ifndef NDEBUG
@@ -102,17 +93,21 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
     full_redraw = true;
   }
 
-  fputs("\033[H", stdout);
-  for (u32 row = 0; row + 1 < renderer->rows && row < buffer->len; ++row) {
-    if (buffer->dirty || full_redraw)
+  if (buffer->dirty || full_redraw) {
+    u32 row = 0;
+    while (row + renderer->scroll < buffer->len && row + 1 < renderer->rows) {
       renderer_render_line(renderer, buffer, row);
+      row++;
+    }
+  }
 
+  fputs("\033[H", stdout);
+  for (u32 row = 0; row < renderer->rows && row + 1 < renderer->rows; ++row) {
     if (row != 0)
       putc('\n', stdout);
 
     if (renderer->line_infos[row].dirty || full_redraw)
-      for (u32 col = 0; col < renderer->cols; ++col)
-        putc(renderer->buffer[row * renderer->cols + col], stdout);
+      printf("%.*s", renderer->cols, renderer->buffer + row * renderer->cols);
 
 #ifdef NDEBUG
     renderer->line_infos[row].dirty = false;
