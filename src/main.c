@@ -39,23 +39,41 @@ int main(i32 argc, char **argv) {
       buffer_delete_before_cursor(&buffer);
     } break;
 
+    case 8: { /* Ctrl+Backspace */
+      buffer_move_left_word(&buffer, true);
+    } break;
+
     case 27: { /* Escape code */
       if (getchar() != 91)
         break;
 
       input = getchar();
-      if (input == 68) /* Left arrow */
+      if (input == 68) { /* Left arrow */
         buffer_move_left(&buffer);
-      else if (input == 67) /* Right arrow */
+      } else if (input == 67) { /* Right arrow */
         buffer_move_right(&buffer);
-      else if (input == 65) /* Up arrow */
+      } else if (input == 65) { /* Up arrow */
         buffer_move_up(&buffer);
-      else if (input == 66) /* Down arrow */
+      } else if (input == 66) { /* Down arrow */
         buffer_move_down(&buffer);
-      else if (input == 90) /* Shift+Tab */
+      } else if (input == 90) { /* Shift+Tab */
         buffer_unindent(&buffer);
-      else if (input == 80) /* Delete */
+      } else if (input == 80) { /* Delete */
         buffer_delete_at_cursor(&buffer);
+      } else if (input == '1') {
+        if (getchar() != ';')
+          break;
+        if (getchar() != '5')
+          break;
+
+        input = getchar();
+        if (input == 'D')
+          buffer_move_left_word(&buffer, false);
+        else if (input == 'C')
+          buffer_move_right_word(&buffer, false);
+      } else if (input == 'M') {
+        buffer_move_right_word(&buffer, true);
+      }
     } break;
 
     case '\t': { /* Tab */

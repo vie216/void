@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctype.h>
 
 #include "buffer.h"
 #include "config.h"
@@ -145,6 +146,38 @@ void buffer_move_down(Buffer *buffer) {
       buffer->col = buffer_line(buffer)->len;
     else
       buffer->col = buffer->persist_col;
+  }
+}
+
+void buffer_move_left_word(Buffer *buffer, bool delete) {
+  bool found_word = false;
+
+  while (buffer->col > 0) {
+    bool alnum = isalnum(buffer_line(buffer)->items[buffer->col - 1]);
+    if (!alnum && found_word)
+      break;
+
+    found_word |= alnum;
+    if (delete)
+      buffer_delete_before_cursor(buffer);
+    else
+      buffer_move_left(buffer);
+  }
+}
+
+void buffer_move_right_word(Buffer *buffer, bool delete) {
+  bool found_word = false;
+
+  while (buffer->col < buffer_line(buffer)->len) {
+    bool alnum = isalnum(buffer_line(buffer)->items[buffer->col]);
+    if (!alnum && found_word)
+      break;
+
+    found_word |= alnum;
+    if (delete)
+      buffer_delete_at_cursor(buffer);
+    else
+      buffer_move_right(buffer);
   }
 }
 
