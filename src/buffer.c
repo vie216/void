@@ -8,7 +8,7 @@ Line *buffer_line(Buffer *buffer) {
   return buffer->items + buffer->row;
 }
 
-i32 buffer_visual_offset_between_lines(Buffer *buffer, Line *prev_line) {
+i32 buffer_tab_offset_from_current_line(Buffer *buffer, Line *prev_line) {
   i32 offset = 0;
 
   for (u32 col = 0; col < buffer->col; ++col)
@@ -127,7 +127,7 @@ void buffer_move_up(Buffer *buffer) {
     Line *prev_line = buffer_line(buffer);
 
     buffer->row--;
-    buffer->col += buffer_visual_offset_between_lines(buffer, prev_line);
+    buffer->col += buffer_tab_offset_from_current_line(buffer, prev_line);
     if (buffer->persist_col > buffer_line(buffer)->len)
       buffer->col = buffer_line(buffer)->len;
     else
@@ -140,7 +140,7 @@ void buffer_move_down(Buffer *buffer) {
     Line *prev_line = buffer_line(buffer);
 
     buffer->row++;
-    buffer->col += buffer_visual_offset_between_lines(buffer, prev_line);
+    buffer->col += buffer_tab_offset_from_current_line(buffer, prev_line);
     if (buffer->persist_col > buffer_line(buffer)->len)
       buffer->col = buffer_line(buffer)->len;
     else
