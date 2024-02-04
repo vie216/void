@@ -54,6 +54,8 @@ int main(i32 argc, char **argv) {
         buffer_move_down(&buffer);
       else if (input == 90) /* Shift+Tab */
         buffer_unindent(&buffer);
+      else if (input == 80) /* Delete */
+        buffer_delete_at_cursor(&buffer);
     } break;
 
     case '\t': { /* Tab */

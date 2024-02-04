@@ -19,7 +19,9 @@ typedef struct {
 u32  buffer_visual_col(Buffer *buffer);
 void buffer_insert(Buffer *buffer, char input);
 void buffer_insert_new_line(Buffer *buffer);
+void buffer_merge_line_down(Buffer *buffer, u32 index);
 void buffer_delete_before_cursor(Buffer *buffer);
+void buffer_delete_at_cursor(Buffer *buffer);
 void buffer_move_left(Buffer *buffer);
 void buffer_move_right(Buffer *buffer);
 void buffer_move_up(Buffer *buffer);

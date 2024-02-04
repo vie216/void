@@ -62,27 +62,41 @@ void buffer_insert_new_line(Buffer *buffer) {
   buffer->dirty = true;
 }
 
+void buffer_merge_line_down(Buffer *buffer, u32 index) {
+  Line *line0 = buffer->items + index - 1;
+  Line *line1 = buffer->items + index;
+  u32 growth_amount = line1->len;
+
+  DA_RESERVE_SPACE(*line0, growth_amount);
+  memmove(line0->items + line0->len,
+          line1->items,
+          growth_amount);
+  free(line1->items);
+  DA_REMOVE(*buffer, index);
+
+  line0->len += growth_amount;
+}
+
 void buffer_delete_before_cursor(Buffer *buffer) {
   if (buffer->col > 0) {
     buffer->col--;
     DA_REMOVE(*buffer_line(buffer), buffer->col);
   } else if (buffer->row > 0) {
-    Line *prev_line = buffer->items + buffer->row - 1;
-    u32 growth_amount = buffer_line(buffer)->len;
-
-    DA_RESERVE_SPACE(*prev_line, growth_amount);
-    memmove(prev_line->items + prev_line->len,
-            buffer_line(buffer)->items,
-            growth_amount);
-    free(buffer->items[buffer->row].items);
-    DA_REMOVE(*buffer, buffer->row);
-
+    buffer->col = buffer->items[buffer->row - 1].len;
+    buffer_merge_line_down(buffer, buffer->row);
     buffer->row--;
-    buffer->col = prev_line->len;
-    prev_line->len += growth_amount;
   }
 
   buffer->persist_col = buffer->col;
+  buffer->dirty = true;
+}
+
+void buffer_delete_at_cursor(Buffer *buffer) {
+  if (buffer->col < buffer_line(buffer)->len)
+    DA_REMOVE(*buffer_line(buffer), buffer->col);
+  else if (buffer->row + 1 < buffer->len)
+    buffer_merge_line_down(buffer, buffer->row + 1);
+
   buffer->dirty = true;
 }
 
@@ -149,17 +163,19 @@ void buffer_indent(Buffer *buffer) {
 }
 
 void buffer_unindent(Buffer *buffer) {
+  Line *line = buffer_line(buffer);
+
   if (HARD_TABS) {
-    if (buffer_line(buffer)->len > 0) {
-      DA_REMOVE(*buffer_line(buffer), 0);
+    if (line->len > 0 && line->items[0] == '\t') {
+      DA_REMOVE(*line, 0);
       buffer->col--;
     }
   } else {
     for (u32 i = 0; i < TAB_WIDTH; ++i) {
-      if (buffer_line(buffer)->len == 0)
+      if (line->len == 0 || line->items[0] != ' ')
         break;
 
-      DA_REMOVE(*buffer_line(buffer), 0);
+      DA_REMOVE(*line, 0);
       buffer->col--;
     }
   }
