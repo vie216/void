@@ -14,7 +14,7 @@ typedef struct {
   u32       scroll;
 } Renderer;
 
-void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 row);
+void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 row, bool full_redraw);
 #ifndef NDEBUG
 void renderer_render_debug_info(Renderer *renderer, bool full_redraw);
 #endif

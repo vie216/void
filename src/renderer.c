@@ -5,38 +5,39 @@
 #include "renderer.h"
 #include "config.h"
 
-void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 row) {
+void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 row, bool full_redraw) {
   LineInfo *info = renderer->line_infos + row;
   Line *line = buffer->items + row + renderer->scroll;
-  u32 col = 0;
+  u32 rcol = 0, bcol = 0;
 
-  while (col < line->len && col < renderer->cap) {
-    if (col != 0 && col % renderer->cols == 0)
-      break;
+  while (bcol < line->len && rcol < renderer->cols) {
+    u32 offset = row * renderer->cols + rcol;
 
-    u32 offset = row * renderer->cols + col;
-
-    if (line->items[col] == '\t') {
-      if (renderer->cap - col > TAB_WIDTH)
+    if (line->items[bcol] == '\t') {
+      if (renderer->cap - rcol > TAB_WIDTH)
         sprintf(renderer->buffer + offset, TAB_STR);
-      col += TAB_WIDTH;
+      rcol += TAB_WIDTH - 1;
     } else {
-      if (line->items[col] != renderer->buffer[offset]) {
+      if (line->items[bcol] != renderer->buffer[offset]) {
         info->dirty = true;
-        renderer->buffer[offset] = line->items[col];
+        renderer->buffer[offset] = line->items[bcol];
       }
-      col++;
     }
+
+    rcol++;
+    bcol++;
   }
 
-  if (line->len < info->len) {
-    u32 offset = row * renderer->cols + line->len;
+  u32 offset = row * renderer->cols + rcol;
+  if (full_redraw && rcol < renderer->cols)
     memset(renderer->buffer + offset,
-           ' ', info->len - line->len);
-  }
+           ' ', renderer->cols - rcol);
+  else if (rcol < info->len)
+    memset(renderer->buffer + offset,
+           ' ', info->len - rcol);
 
-  info->dirty = info->dirty || line->len != info->len;
-  info->len = line->len;
+  info->dirty = info->dirty || rcol != info->len;
+  info->len = rcol;
 }
 
 #ifndef NDEBUG
@@ -98,7 +99,7 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
          row + renderer->scroll < buffer->len &&
            row + 1 < renderer->rows;
          ++row) {
-      renderer_render_line(renderer, buffer, row);
+      renderer_render_line(renderer, buffer, row, full_redraw);
     }
   }
 

@@ -197,7 +197,7 @@ void buffer_move_up_paragraph(Buffer *buffer) {
 void buffer_move_down_paragraph(Buffer *buffer) {
   bool found_paragraph = false;
 
-  while (buffer->row < buffer->len) {
+  while (buffer->row + 1 < buffer->len) {
     bool is_paragraph = buffer_line(buffer)->len != 0;
     if (!is_paragraph && found_paragraph)
       break;
@@ -247,7 +247,8 @@ void buffer_unindent(Buffer *buffer) {
   if (HARD_TABS) {
     if (line->len > 0 && line->items[0] == '\t') {
       DA_REMOVE(*line, 0);
-      buffer->col--;
+      if (buffer->col > 0)
+        buffer->col--;
     }
   } else {
     for (u32 i = 0; i < TAB_WIDTH; ++i) {
@@ -255,7 +256,8 @@ void buffer_unindent(Buffer *buffer) {
         break;
 
       DA_REMOVE(*line, 0);
-      buffer->col--;
+      if (buffer->col > 0)
+        buffer->col--;
     }
   }
 
