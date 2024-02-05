@@ -153,11 +153,11 @@ void buffer_move_left_word(Buffer *buffer, bool delete) {
   bool found_word = false;
 
   while (buffer->col > 0) {
-    bool alnum = isalnum(buffer_line(buffer)->items[buffer->col - 1]);
-    if (!alnum && found_word)
+    bool is_word = isalnum(buffer_line(buffer)->items[buffer->col - 1]);
+    if (!is_word && found_word)
       break;
 
-    found_word |= alnum;
+    found_word |= is_word;
     if (delete)
       buffer_delete_before_cursor(buffer);
     else
@@ -169,16 +169,62 @@ void buffer_move_right_word(Buffer *buffer, bool delete) {
   bool found_word = false;
 
   while (buffer->col < buffer_line(buffer)->len) {
-    bool alnum = isalnum(buffer_line(buffer)->items[buffer->col]);
-    if (!alnum && found_word)
+    bool is_word = isalnum(buffer_line(buffer)->items[buffer->col]);
+    if (!is_word && found_word)
       break;
 
-    found_word |= alnum;
+    found_word |= is_word;
     if (delete)
       buffer_delete_at_cursor(buffer);
     else
       buffer_move_right(buffer);
   }
+}
+
+void buffer_move_up_paragraph(Buffer *buffer) {
+  bool found_paragraph = false;
+
+  while (buffer->row > 0) {
+    bool is_paragraph = buffer_line(buffer)->len != 0;
+    if (!is_paragraph && found_paragraph)
+      break;
+
+    found_paragraph |= is_paragraph;
+    buffer_move_up(buffer);
+  }
+}
+
+void buffer_move_down_paragraph(Buffer *buffer) {
+  bool found_paragraph = false;
+
+  while (buffer->row < buffer->len) {
+    bool is_paragraph = buffer_line(buffer)->len != 0;
+    if (!is_paragraph && found_paragraph)
+      break;
+
+    found_paragraph |= is_paragraph;
+    buffer_move_down(buffer);
+  }
+}
+
+void buffer_move_to_line_start(Buffer *buffer) {
+  buffer->col = 0;
+  buffer->persist_col = buffer->col;
+}
+
+void buffer_move_to_line_end(Buffer *buffer) {
+  buffer->col = buffer_line(buffer)->len;
+  buffer->persist_col = buffer->col;
+}
+
+void buffer_move_to_buffer_start(Buffer *buffer) {
+  buffer->row = 0;
+  buffer_move_to_line_start(buffer);
+}
+
+void buffer_move_to_buffer_end(Buffer *buffer) {
+  buffer->row = buffer->len - 1;
+  buffer_move_to_line_end(buffer);
 }
 
 void buffer_indent(Buffer *buffer) {
