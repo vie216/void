@@ -1,9 +1,10 @@
 #include <stdio.h>
-#include <ctype.h>
+#include <wctype.h>
 
 #include "buffer.h"
 #include "config.h"
 #include "fs.h"
+#include "wstr.h"
 
 Line *buffer_line(Buffer *buffer) {
   return buffer->items + buffer->row;
@@ -13,10 +14,10 @@ i32 buffer_tab_offset_from_current_line(Buffer *buffer, Line *prev_line) {
   i32 offset = 0;
 
   for (u32 col = 0; col < buffer->col; ++col)
-    if (buffer_line(buffer)->items[col] == '\t')
+    if (buffer_line(buffer)->items[col] == WIDEN('\t'))
       offset -= TAB_WIDTH - 1;
   for (u32 col = 0; col < buffer->col && col < prev_line->len; ++col)
-    if (prev_line->items[col] == '\t')
+    if (prev_line->items[col] == WIDEN('\t'))
       offset += TAB_WIDTH - 1;
 
   return offset;
@@ -26,7 +27,7 @@ u32 buffer_visual_col(Buffer *buffer) {
   u32 visual_col = 0;
 
   for (u32 col = 0; col < buffer->col; ++col)
-    if (buffer_line(buffer)->items[col] == '\t')
+    if (buffer_line(buffer)->items[col] == WIDEN('\t'))
       visual_col += TAB_WIDTH;
     else
       visual_col += 1;
@@ -34,7 +35,7 @@ u32 buffer_visual_col(Buffer *buffer) {
   return visual_col;
 }
 
-void buffer_insert(Buffer *buffer, char input) {
+void buffer_insert(Buffer *buffer, u32 input) {
   DA_INSERT(*buffer_line(buffer), input, buffer->col);
   buffer->col++;
   buffer->persist_col = buffer->col;
@@ -44,7 +45,7 @@ void buffer_insert(Buffer *buffer, char input) {
 void buffer_insert_new_line(Buffer *buffer) {
   u32 rest_len = buffer_line(buffer)->len - buffer->col;
   Line new_line = (Line) {
-    .items = malloc(rest_len),
+    .items = malloc(rest_len * sizeof(u32)),
     .len = rest_len,
     .cap = rest_len,
   };
@@ -56,7 +57,7 @@ void buffer_insert_new_line(Buffer *buffer) {
   Line *line = buffer->items + buffer->row - 1;
   memmove(new_line.items,
           line->items + buffer->col,
-          rest_len);
+          rest_len * sizeof(u32));
 
   buffer->col = 0;
   buffer->persist_col = 0;
@@ -71,7 +72,7 @@ void buffer_merge_line_down(Buffer *buffer, u32 index) {
   DA_RESERVE_SPACE(*line0, growth_amount);
   memmove(line0->items + line0->len,
           line1->items,
-          growth_amount);
+          growth_amount * sizeof(u32));
   free(line1->items);
   DA_REMOVE(*buffer, index);
 
@@ -153,7 +154,8 @@ void buffer_move_left_word(Buffer *buffer, bool delete) {
   bool found_word = false;
 
   while (buffer->col > 0) {
-    bool is_word = isalnum(buffer_line(buffer)->items[buffer->col - 1]);
+    u32 ch = buffer_line(buffer)->items[buffer->col - 1];
+    bool is_word = iswalnum(ch);
     if (!is_word && found_word)
       break;
 
@@ -169,7 +171,8 @@ void buffer_move_right_word(Buffer *buffer, bool delete) {
   bool found_word = false;
 
   while (buffer->col < buffer_line(buffer)->len) {
-    bool is_word = isalnum(buffer_line(buffer)->items[buffer->col]);
+    u32 ch = buffer_line(buffer)->items[buffer->col];
+    bool is_word = iswalnum(ch);
     if (!is_word && found_word)
       break;
 
@@ -266,49 +269,48 @@ void buffer_unindent(Buffer *buffer) {
 }
 
 void buffer_read_file(Buffer *buffer, char *path) {
-  u32   file_len = 0;
-  char *file_content = read_file(path, &file_len);
-  u32   line_start = 0;
+  u32  file_len = 0;
+  u8 *file_content = read_file(path, &file_len);
+  u32  line_start = 0;
+
+  if (!file_content) {
+    DA_APPEND(*buffer, (Line) {0});
+    return;
+  }
 
   for (u32 i = 0; i <= file_len; ++i) {
-    if (i == file_len || file_content[i] == '\n') {
+    if (file_content[i] == '\n' || i == file_len) {
       u32 line_len = i - line_start;
+      WStr wstr = utow((Str) {
+          .ptr = file_content + line_start,
+          .len = line_len,
+        });
       Line line = (Line) {
-        .items = malloc(line_len),
-        .len = line_len,
-        .cap = line_len,
+        .items = wstr.ptr,
+        .len = wstr.len,
+        .cap = wstr.len,
       };
 
       DA_APPEND(*buffer, line);
-      memmove(line.items,
-              file_content + line_start,
-              line_len);
       line_start = i + 1;
     }
   }
 
   buffer->dirty = true;
+  free(file_content);
 }
 
 void buffer_write_file(Buffer *buffer, char *path) {
-  u32 content_len = buffer->len;
-  for (u32 row = 0; row < buffer->len; ++row)
-    content_len += buffer->items[row].len;
+  FILE *file = fopen(path, "w");
 
-  char *content = malloc(content_len);
-  u32 offset = 0;
   for (u32 row = 0; row < buffer->len; ++row) {
     if (row != 0)
-      content[offset++] = '\n';
+      putc('\n', file);
 
     Line *line = buffer->items + row;
-    memmove(content + offset, line->items, line->len);
-    offset += line->len;
+    for (u32 col = 0; col < line->len; ++col)
+      wputc(line->items[col], file);
   }
-  content[content_len - 1] = '\0';
 
-  FILE *file = fopen(path, "w");
-  fputs(content, file);
   fclose(file);
-  free(content);
 }

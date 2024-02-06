@@ -6,6 +6,7 @@
 #include "buffer.h"
 #include "config.h"
 #include "renderer.h"
+#include "wstr.h"
 
 int main(i32 argc, char **argv) {
   term_init();
@@ -22,9 +23,9 @@ int main(i32 argc, char **argv) {
     DA_APPEND(buffer, ((Line) {0}));
   }
 
-  char input;
+  u32 input;
   renderer_render_buffer(&renderer, &buffer);
-  while ((input = getchar()) != 3 && input != EOF) {
+  while ((input = wgetc(stdin)) != 3 && input != (u32) EOF) {
     switch (input) {
     case 19: { /* Ctrl+S */
       if (file_path)
@@ -94,7 +95,7 @@ int main(i32 argc, char **argv) {
     } break;
 
     default: {
-      if (input >= 32 && (u8) input <= 127)
+      if ((input >= 32 && input <= 127) || input > 0x7F)
         buffer_insert(&buffer, input);
     }
     }

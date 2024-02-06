@@ -4,39 +4,46 @@
 
 #include "renderer.h"
 #include "config.h"
+#include "wstr.h"
 
-void renderer_render_line(Renderer *renderer, Buffer *buffer, u32 row, bool full_redraw) {
+void renderer_render_line(Renderer *renderer, Buffer *buffer,
+                          u32 row, bool full_redraw) {
   LineInfo *info = renderer->line_infos + row;
   Line *line = buffer->items + row + renderer->scroll;
   u32 rcol = 0, bcol = 0;
 
+  if (row + renderer->scroll >= buffer->len)
+    goto end;
+
   while (bcol < line->len && rcol < renderer->cols) {
     u32 offset = row * renderer->cols + rcol;
 
-    if (line->items[bcol] == '\t') {
-      if (renderer->cap - rcol > TAB_WIDTH)
-        sprintf(renderer->buffer + offset, TAB_STR);
-      rcol += TAB_WIDTH - 1;
+    if (line->items[bcol] == WIDEN('\t')) {
+      for (u32 i = 0; i < TAB_WIDTH &&
+             i + offset < renderer->cap; ++i)
+        renderer->buffer[i + offset] = WIDEN(' ');
+      rcol += TAB_WIDTH;
     } else {
       if (line->items[bcol] != renderer->buffer[offset]) {
         info->dirty = true;
         renderer->buffer[offset] = line->items[bcol];
       }
+      rcol++;
     }
 
-    rcol++;
     bcol++;
   }
 
+ end:
   u32 offset = row * renderer->cols + rcol;
   if (full_redraw && rcol < renderer->cols)
     memset(renderer->buffer + offset,
-           ' ', renderer->cols - rcol);
+           0, (renderer->cols - rcol) * sizeof(u32));
   else if (rcol < info->len)
     memset(renderer->buffer + offset,
-           ' ', info->len - rcol);
+           0, (info->len - rcol) * sizeof(u32));
 
-  info->dirty = info->dirty || rcol != info->len;
+  info->dirty |= rcol != info->len;
   info->len = rcol;
 }
 
@@ -66,17 +73,17 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
 
   ioctl(1, TIOCGWINSZ, &ws);
   if (renderer->rows != ws.ws_row || renderer->cols != ws.ws_col) {
-    if (renderer->cap == 0) {
+    if (renderer->cap != 0) {
       free(renderer->buffer);
       free(renderer->line_infos);
     }
-    renderer->buffer = malloc(ws.ws_row * ws.ws_col);
+    renderer->buffer = malloc(ws.ws_row * ws.ws_col * sizeof(u32));
     renderer->line_infos = malloc(ws.ws_row * sizeof(LineInfo));
     renderer->rows = ws.ws_row;
     renderer->cols = ws.ws_col;
     renderer->cap = renderer->rows * renderer->cols;
 
-    memset(renderer->buffer, ' ', renderer->cap);
+    memset(renderer->buffer, 0, renderer->cap * sizeof(u32));
     memset(renderer->line_infos, 0, ws.ws_row * sizeof(LineInfo));
     full_redraw = true;
   }
@@ -94,46 +101,37 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
     full_redraw = true;
   }
 
-  if (buffer->dirty || full_redraw) {
-    for (u32 row = 0;
-         row + renderer->scroll < buffer->len &&
-           row + 1 < renderer->rows;
-         ++row) {
+  if (buffer->dirty || full_redraw)
+    for (u32 row = 0; row + 1 < renderer->rows; ++row)
       renderer_render_line(renderer, buffer, row, full_redraw);
-    }
-  }
 
   fputs("\033[H", stdout);
-  for (u32 row = 0;
-       row + renderer->scroll < buffer->len &&
-         row + 1 < renderer->rows;
-       ++row) {
+  for (u32 row = 0; row + 1 < renderer->rows; ++row) {
     if (row != 0)
-      putc('\n', stdout);
+      putchar('\n');
 
-    if (renderer->line_infos[row].dirty || full_redraw)
-      printf("%.*s", renderer->cols, renderer->buffer + row * renderer->cols);
+    if (renderer->line_infos[row].dirty || full_redraw) {
+      fputs("\033[K", stdout);
+      for (u32 col = 0; col < renderer->cols; ++col) {
+        u32 ch = renderer->buffer[row * renderer->cols + col];
+        if (ch == 0)
+          break;
+        wputc(ch, stdout);
+      }
+    }
 
 #ifdef NDEBUG
     renderer->line_infos[row].dirty = false;
 #endif
   }
 
-  if (full_redraw)
-    for (u32 row = buffer->len; row < renderer->rows; ++row)
-      fputs("\n\033[K", stdout);
-  else if (buffer->len < renderer->prev_buffer_len)
-    for (u32 row = buffer->len; row < renderer->prev_buffer_len; ++row)
-      fputs("\n\033[K", stdout);
-
   buffer->dirty = false;
-  renderer->prev_buffer_len = buffer->len;
 
   renderer_render_status_bar(renderer, buffer);
 
 #ifndef NDEBUG
   renderer_render_debug_info(renderer, full_redraw);
-  for (u32 row = 0; row < renderer->rows && row < buffer->len; ++row)
+  for (u32 row = 0; row < renderer->rows; ++row)
     renderer->line_infos[row].dirty = false;
 #endif
 
