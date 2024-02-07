@@ -25,7 +25,7 @@ int main(i32 argc, char **argv) {
 
   u32 input;
   renderer_render_buffer(&renderer, &buffer);
-  while ((input = wgetc(stdin)) != 3 && input != (u32) EOF) {
+  while ((input = wgetc(stdin)) != 17 && input != (u32) EOF) {
     switch (input) {
     case 19: { /* Ctrl+S */
       if (file_path)
