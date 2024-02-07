@@ -235,13 +235,17 @@ void buffer_move_to_buffer_end(Buffer *buffer) {
 }
 
 void buffer_indent(Buffer *buffer) {
+  Line *line = buffer_line(buffer);
+
   if (HARD_TABS) {
-    DA_INSERT(*buffer_line(buffer), '\t', 0);
-    buffer->col++;
+    DA_INSERT(*line, '\t', 0);
+    while (buffer->col < line->len && line->items[buffer->col] == '\t')
+      buffer->col++;
   } else {
     for (u32 i = 0; i < TAB_WIDTH; ++i)
-      DA_INSERT(*buffer_line(buffer), ' ', 0);
-    buffer->col += TAB_WIDTH;
+      DA_INSERT(*line, ' ', 0);
+    while (buffer->col < line->len && line->items[buffer->col] == ' ')
+      buffer->col++;
   }
 
   buffer->persist_col = buffer->col;
