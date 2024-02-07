@@ -195,6 +195,8 @@ void buffer_move_up_paragraph(Buffer *buffer) {
     found_paragraph |= is_paragraph;
     buffer_move_up(buffer);
   }
+
+  buffer_move_to_line_start(buffer);
 }
 
 void buffer_move_down_paragraph(Buffer *buffer) {
@@ -208,6 +210,8 @@ void buffer_move_down_paragraph(Buffer *buffer) {
     found_paragraph |= is_paragraph;
     buffer_move_down(buffer);
   }
+
+  buffer_move_to_line_start(buffer);
 }
 
 void buffer_move_to_line_start(Buffer *buffer) {

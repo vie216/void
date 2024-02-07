@@ -5,22 +5,37 @@
 void wputc(u32 ch, FILE *stream) {
   u8 *ptr = (u8 *) &ch;
 
-  for (i8 i = 3; i >= 0; --i)
+  for (u8 i = 0; i < 4; ++i)
     if (ptr[i])
       putc(ptr[i], stream);
 }
 
+static u8 offset_table[3] = { 7, 5, 4 };
+
 u32 wgetc(FILE *stream) {
-  u32 ch = 0;
-  u8 *ptr = (u8 *) &ch;
+  u8 ptr[4] = {0};
 
   ptr[0] = getc(stream);
-  if (ptr[0] >> 7) {
-    ch <<= 8;
-    ptr[0] = getc(stream);
+  for (u32 i = 0; i < sizeof(offset_table); ++i) {
+    if (!((ptr[0] >> offset_table[i]) & 1))
+      break;
+    ptr[i + 1] = getc(stream);
   }
 
-  return ch;
+  return *(u32 *) ptr;
+}
+
+u32 wreadc(Str *ustr) {
+  u8 ptr[4] = {0};
+
+  ptr[0] = ustr->ptr++[0];
+  for (u32 i = 0; i < sizeof(offset_table); ++i) {
+    if (ustr->len <= i + 1 || !((ptr[0] >> offset_table[i]) & 1))
+      break;
+    ptr[i + 1] = ustr->ptr++[0];
+  }
+
+  return *(u32 *) ptr;
 }
 
 WStr utow(Str ustr) {
@@ -28,18 +43,11 @@ WStr utow(Str ustr) {
   for (u32 i = 0; i < ustr.len; ++i)
     wlen += (ustr.ptr[i] >> 6) != 0b10;
 
-  u8 *wstr = malloc(wlen * sizeof(u32));
+  u32 *wstr = malloc(wlen * sizeof(u32));
   memset(wstr, 0, wlen * sizeof(u32));
 
-  u32 char_base = -4;
-  for (u32 i = 0, j = 0; i < ustr.len; ++i, --j) {
-    if (ustr.ptr[i] >> 6 != 0b10) {
-      char_base += 4;
-      j = 3;
-    }
-
-    wstr[char_base + j] = ustr.ptr[i];
-  }
+  for (u32 i = 0; i < wlen; ++i)
+    wstr[i] = wreadc(&ustr);
 
   return (WStr) {
     .ptr = (u32 *) wstr,

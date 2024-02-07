@@ -1,3 +1,6 @@
+#ifndef RENDERER_H
+#define RENDERER_H
+
 #include <stdbool.h>
 
 #include "defs.h"
@@ -22,3 +25,5 @@ void renderer_render_debug_info(Renderer *renderer, bool full_redraw);
 #endif
 void renderer_render_status_bar(Renderer *renderer, Buffer *buffer);
 void renderer_render_buffer(Renderer *renderer, Buffer *buffer);
+
+#endif // RENDERER_H

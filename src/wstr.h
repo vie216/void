@@ -1,6 +1,9 @@
 /* Functions for working with wide strings
-   Information about utf-8 format taken from
+   Information about utf-8 format was taken from
    https://www.cprogramming.com/tutorial/unicode.html */
+
+#ifndef WSTR_H
+#define WSTR_H
 
 #include <stdio.h>
 
@@ -24,3 +27,5 @@ u32 wgetc(FILE *stream);
 WStr utow(Str str);
 
 #define WIDEN(ch) ((u32) (ch) << 24)
+
+#endif // WSTR_H
