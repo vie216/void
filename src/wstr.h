@@ -1,4 +1,4 @@
-/* Functions for working with wide strings
+/* Functions for working with utf-8 and wide strings
    Information about utf-8 format was taken from
    https://www.cprogramming.com/tutorial/unicode.html */
 
@@ -19,10 +19,12 @@ typedef struct {
   u32 len;
 } Str;
 
-/* Print wide character to stream */
+/* Print wide character to stream as uft-8 */
 void wputc(u32 ch, FILE *stream);
-/* Get wide character from stream */
+/* Get utf-8 character from stream as wide */
 u32 wgetc(FILE *stream);
+/* Get utf-8 character from string as wide */
+u32 wreadc(Str *ustr);
 /* Convert utf-8 string to wide string */
 WStr utow(Str str);
 
