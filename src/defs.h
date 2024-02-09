@@ -6,19 +6,19 @@
 
 #define ARRAY_LEN(array) (sizeof(array) / sizeof(array[0]))
 
-#define DA_RESERVE_SPACE(da, amount)                                \
-  do {                                                              \
-    u32 size = sizeof((da).items[0]);                               \
-    if ((da).cap < (da).len + amount) {                             \
-      if ((da).cap != 0) {                                          \
-        while ((da).cap < (da).len + amount)                        \
-          (da).cap *= 2;                                            \
-        (da).items = realloc((da).items, size * (da).cap);          \
-      } else {                                                      \
-        (da).cap = 1;                                               \
-        (da).items = malloc(size * (da).cap);                       \
-      }                                                             \
-    }                                                               \
+#define DA_RESERVE_SPACE(da, amount)                       \
+  do {                                                     \
+    u32 size = sizeof((da).items[0]);                      \
+    if ((da).cap < (da).len + amount) {                    \
+      if ((da).cap != 0) {                                 \
+        while ((da).cap < (da).len + amount)               \
+          (da).cap *= 2;                                   \
+        (da).items = realloc((da).items, size * (da).cap); \
+      } else {                                             \
+        (da).cap = 1;                                      \
+        (da).items = malloc(size * (da).cap);              \
+      }                                                    \
+    }                                                      \
   } while (0)
 
 #define DA_APPEND(da, element)        \
@@ -27,26 +27,32 @@
     (da).items[(da).len++] = element; \
   } while (0)
 
-#define DA_INSERT(da, element, index)      \
-  do {                                     \
-    u32 size = sizeof((da).items[0]);      \
-    DA_RESERVE_SPACE(da, 1);               \
-    memcpy((da).items + (index) + 1,       \
-           (da).items + (index),           \
-           size * ((da).len++ - (index))); \
-    (da).items[index] = element;           \
+#define DA_INSERT(da, element, index) DA_INSERT_REPEAT(da, element, 1, index)
+
+#define DA_INSERT_REPEAT(da, element, amount, index) \
+  do {                                               \
+    u32 size = sizeof((da).items[0]);                \
+    DA_RESERVE_SPACE(da, amount);                    \
+    memcpy((da).items + (index) + amount,            \
+           (da).items + (index),                     \
+           size * ((da).len - (index)));             \
+    (da).len += amount;                              \
+    for (u32 i = 0; i < amount; ++i)                 \
+      (da).items[index + i] = element;               \
   } while (0)
 
-#define DA_REMOVE(da, index)                   \
-  do {                                         \
-    u32 size = sizeof((da).items[0]);          \
-    if ((da).len > 0) {                        \
-      if ((index) != (da).len - 1)             \
-        memcpy((da).items + (index),           \
-               (da).items + (index) + 1,       \
-               size * ((da).len - (index)));   \
-      (da).len--;                              \
-    }                                          \
+#define DA_REMOVE(da, index) DA_REMOVE_REPEAT(da, 1, index)
+
+#define DA_REMOVE_REPEAT(da, amount, index)       \
+  do {                                            \
+    u32 size = sizeof((da).items[0]);             \
+      if ((da).len >= (amount)) {                 \
+        if ((index) + (amount) != (da).len)       \
+          memcpy((da).items + (index),            \
+                 (da).items + (index) + (amount), \
+                 size * ((da).len - (index)));    \
+        (da).len -= amount;                       \
+      }                                           \
   } while (0)
 
 typedef signed char    i8;

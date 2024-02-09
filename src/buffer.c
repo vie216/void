@@ -114,8 +114,7 @@ void buffer_indent(Buffer *buffer) {
     buffer->col += TAB_WIDTH;
     ident_char = '\t';
   } else {
-    for (u32 i = 0; i < TAB_WIDTH; ++i)
-      DA_INSERT(*line, ' ', 0);
+    DA_INSERT_REPEAT(*line, ' ', TAB_WIDTH, 0);
     buffer->col += TAB_WIDTH;
     ident_char = ' ';
   }
@@ -137,14 +136,14 @@ void buffer_unindent(Buffer *buffer) {
         buffer->col--;
     }
   } else {
-    for (u32 i = 0; i < TAB_WIDTH; ++i) {
-      if (line->len == 0 || line->items[0] != ' ')
-        break;
-
-      DA_REMOVE(*line, 0);
-      if (buffer->col > 0)
-        buffer->col--;
-    }
+    u32 i = 0;
+    while (i < TAB_WIDTH && i < line->len &&
+             line->items[0] == ' ') i++;
+    DA_REMOVE_REPEAT(*line, i, 0);
+    if (i < buffer->col)
+      buffer->col = buffer->col - i;
+    else
+      buffer->col = 0;
   }
 
   buffer->persist_col = buffer->col;
