@@ -51,8 +51,8 @@ Input decode_input_from_stdin(u8 ch) {
 
   (void) arg0;
 
-  ctrl = arg1 == 3;
-  alt = arg1 == 5;
+  ctrl = arg1 == 5;
+  alt = arg1 == 3;
 
   switch (ch) {
   case 'D': return (Input) { KEY_LEFT, ctrl, alt };
