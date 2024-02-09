@@ -4,6 +4,7 @@
 #include "defs.h"
 
 typedef enum {
+  KEY_NONE      = 0,
   KEY_LEFT      = 1 << 0,
   KEY_RIGHT     = 1 << 1,
   KEY_UP        = 1 << 2,

@@ -10,62 +10,65 @@
 #include "wstr.h"
 #include "keymap.h"
 
+#define BIND(key_)      (decoded.key & (key_)) && !decoded.ctrl && !decoded.alt
+#define BIND_CTRL(key_) (decoded.key & (key_)) &&  decoded.ctrl && !decoded.alt
+#define BIND_ALT(key_)  (decoded.key & (key_)) && !decoded.ctrl &&  decoded.alt
+
 bool process_input(Buffer *buffer, char *file_path, u32 input) {
   if ((input >= 32 && input <= 126) || input > 127) {
     buffer_insert(buffer, input);
   } else {
     Input decoded = decode_input_from_stdin(input);
-    if (!decoded.key)
+    if (decoded.key == KEY_NONE)
       return true;
 
-    if (decoded.key == KEY_Q && decoded.ctrl)
+    if (KB_QUIT)
       return false;
-    else if (decoded.key == KEY_ENTER)
-      buffer_insert_new_line(buffer);
-    else if (decoded.key == KEY_BACKSPACE && decoded.ctrl)
-      buffer_move_left_word(buffer, true);
-    else if (decoded.key == KEY_BACKSPACE)
-      buffer_delete_before_cursor(buffer);
-    else if (decoded.key == KEY_DELETE && decoded.ctrl)
-      buffer_move_right_word(buffer, true);
-    else if (decoded.key == KEY_DELETE)
-      buffer_delete_at_cursor(buffer);
-    else if (decoded.key == KEY_TAB)
-      buffer_indent(buffer);
-    else if (decoded.key == KEY_BACKTAB)
-      buffer_unindent(buffer);
-    else if (decoded.key == KEY_S && decoded.ctrl)
+    else if (KB_SAVE)
       /* Not using `if` here because I just don't want to
          put braces everywhere in this `if-else` chain
          (ambiguous `else` or inconsistent code style otherwise) */
       file_path ? buffer_write_file(buffer, file_path) : 0;
-    /* Ctrl+Arrows */
-    else if (decoded.key == KEY_LEFT && decoded.ctrl)
-      buffer_move_left_word(buffer, false);
-    else if (decoded.key == KEY_RIGHT && decoded.ctrl)
-      buffer_move_right_word(buffer, false);
-    else if (decoded.key == KEY_UP && decoded.ctrl)
-      buffer_move_up_paragraph(buffer);
-    else if (decoded.key == KEY_DOWN && decoded.ctrl)
-      buffer_move_down_paragraph(buffer);
-    /* Alt+Arrows */
-    else if (decoded.key == KEY_LEFT && decoded.alt)
-      buffer_move_to_line_start(buffer);
-    else if (decoded.key == KEY_RIGHT && decoded.alt)
-      buffer_move_to_line_end(buffer);
-    else if (decoded.key == KEY_UP && decoded.alt)
-      buffer_move_to_buffer_start(buffer);
-    else if (decoded.key == KEY_DOWN && decoded.alt)
-      /* Arrows */
-      buffer_move_to_buffer_end(buffer);
-    else if (decoded.key == KEY_LEFT)
+    /*               Editing                */
+    else if (KB_NEW_LINE)
+      buffer_insert_new_line(buffer);
+    else if (KB_DEL_PREV)
+      buffer_delete_before_cursor(buffer);
+    else if (KB_DEL_PREV_WORD)
+      buffer_move_left_word(buffer, true);
+    else if (KB_DEL_NEXT)
+      buffer_delete_at_cursor(buffer);
+    else if (KB_DEL_NEXT_WORD)
+      buffer_move_right_word(buffer, true);
+    else if (KB_INDENT)
+      buffer_indent(buffer);
+    else if (KB_UNINDENT)
+      buffer_unindent(buffer);
+    /*              Navigation              */
+    else if (KB_LEFT)
       buffer_move_left(buffer);
-    else if (decoded.key == KEY_RIGHT)
+    else if (KB_RIGHT)
       buffer_move_right(buffer);
-    else if (decoded.key == KEY_UP)
+    else if (KB_UP)
       buffer_move_up(buffer);
-    else if (decoded.key == KEY_DOWN)
+    else if (KB_DOWN)
       buffer_move_down(buffer);
+    else if (KB_LEFT_WORD)
+      buffer_move_left_word(buffer, false);
+    else if (KB_RIGHT_WORD)
+      buffer_move_right_word(buffer, false);
+    else if (KB_UP_PARAGRAPH)
+      buffer_move_up_paragraph(buffer);
+    else if (KB_DOWN_PARAGRAPH)
+      buffer_move_down_paragraph(buffer);
+    else if (KB_LINE_START)
+      buffer_move_to_line_start(buffer);
+    else if (KB_LINE_END)
+      buffer_move_to_line_end(buffer);
+    else if (KB_FILE_START)
+      buffer_move_to_buffer_start(buffer);
+    else if (KB_FILE_END)
+      buffer_move_to_buffer_end(buffer);
   }
 
   return true;
