@@ -28,6 +28,4 @@ u32 wreadc(Str *ustr);
 /* Convert utf-8 string to wide string */
 WStr utow(Str str);
 
-#define WIDEN(ch) ((u32) (ch) << 24)
-
 #endif // WSTR_H

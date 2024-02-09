@@ -19,13 +19,16 @@ typedef struct {
 } Buffer;
 
 Line *buffer_line(Buffer *buffer);
-i32   buffer_tab_offset_from_current_line(Buffer *buffer, Line *prev_line);
 u32   buffer_visual_col(Buffer *buffer);
+i32   buffer_tab_offset_from_current_line(Buffer *buffer, Line *line);
+void  buffer_merge_line_down(Buffer *buffer, u32 index);
 void  buffer_insert(Buffer *buffer, u32 input);
 void  buffer_insert_new_line(Buffer *buffer);
-void  buffer_merge_line_down(Buffer *buffer, u32 index);
 void  buffer_delete_before_cursor(Buffer *buffer);
 void  buffer_delete_at_cursor(Buffer *buffer);
+void  buffer_indent(Buffer *buffer);
+void  buffer_unindent(Buffer *buffer);
+void  buffer_autoindent(Buffer *buffer);
 void  buffer_move_left(Buffer *buffer);
 void  buffer_move_right(Buffer *buffer);
 void  buffer_move_up(Buffer *buffer);
@@ -38,8 +41,6 @@ void  buffer_move_to_line_start(Buffer *buffer);
 void  buffer_move_to_line_end(Buffer *buffer);
 void  buffer_move_to_buffer_start(Buffer *buffer);
 void  buffer_move_to_buffer_end(Buffer *buffer);
-void  buffer_indent(Buffer *buffer);
-void  buffer_unindent(Buffer *buffer);
 void  buffer_read_file(Buffer *buffer, char *path);
 void  buffer_write_file(Buffer *buffer, char *path);
 

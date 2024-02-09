@@ -18,10 +18,10 @@ void renderer_render_line(Renderer *renderer, Buffer *buffer,
   while (bcol < line->len && rcol < renderer->cols) {
     u32 offset = row * renderer->cols + rcol;
 
-    if (line->items[bcol] == WIDEN('\t')) {
+    if (line->items[bcol] == '\t') {
       for (u32 i = 0; i < TAB_WIDTH &&
              i + offset < renderer->cap; ++i)
-        renderer->buffer[i + offset] = WIDEN(' ');
+        renderer->buffer[i + offset] = ' ';
       rcol += TAB_WIDTH;
     } else {
       if (line->items[bcol] != renderer->buffer[offset]) {

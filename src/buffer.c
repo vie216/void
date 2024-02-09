@@ -10,29 +10,45 @@ Line *buffer_line(Buffer *buffer) {
   return buffer->items + buffer->row;
 }
 
-i32 buffer_tab_offset_from_current_line(Buffer *buffer, Line *prev_line) {
-  i32 offset = 0;
-
-  for (u32 col = 0; col < buffer->col; ++col)
-    if (buffer_line(buffer)->items[col] == WIDEN('\t'))
-      offset -= TAB_WIDTH - 1;
-  for (u32 col = 0; col < buffer->col && col < prev_line->len; ++col)
-    if (prev_line->items[col] == WIDEN('\t'))
-      offset += TAB_WIDTH - 1;
-
-  return offset;
-}
-
 u32 buffer_visual_col(Buffer *buffer) {
   u32 visual_col = 0;
 
   for (u32 col = 0; col < buffer->col; ++col)
-    if (buffer_line(buffer)->items[col] == WIDEN('\t'))
+    if (buffer_line(buffer)->items[col] == '\t')
       visual_col += TAB_WIDTH;
     else
       visual_col += 1;
 
   return visual_col;
+}
+
+i32 buffer_tab_offset_from_current_line(Buffer *buffer, Line *line) {
+  i32 current_offset = 0;
+  i32 prev_offset = 0;
+
+  for (u32 col = 0; col < buffer->persist_col && col < line->len; ++col)
+    if (line->items[col] == '\t')
+      prev_offset += TAB_WIDTH - 1;
+  for (u32 col = 0; col + current_offset < buffer->persist_col + prev_offset; ++col)
+    if (buffer_line(buffer)->items[col] == '\t')
+      current_offset += TAB_WIDTH - 1;
+
+  return prev_offset - current_offset;
+}
+
+void buffer_merge_line_down(Buffer *buffer, u32 index) {
+  Line *line0 = buffer->items + index - 1;
+  Line *line1 = buffer->items + index;
+  u32 growth_amount = line1->len;
+
+  DA_RESERVE_SPACE(*line0, growth_amount);
+  memmove(line0->items + line0->len,
+          line1->items,
+          growth_amount * sizeof(u32));
+  free(line1->items);
+  DA_REMOVE(*buffer, index);
+
+  line0->len += growth_amount;
 }
 
 void buffer_insert(Buffer *buffer, u32 input) {
@@ -60,23 +76,10 @@ void buffer_insert_new_line(Buffer *buffer) {
           rest_len * sizeof(u32));
 
   buffer->col = 0;
-  buffer->persist_col = 0;
-  buffer->dirty = true;
-}
+  buffer_autoindent(buffer);
 
-void buffer_merge_line_down(Buffer *buffer, u32 index) {
-  Line *line0 = buffer->items + index - 1;
-  Line *line1 = buffer->items + index;
-  u32 growth_amount = line1->len;
-
-  DA_RESERVE_SPACE(*line0, growth_amount);
-  memmove(line0->items + line0->len,
-          line1->items,
-          growth_amount * sizeof(u32));
-  free(line1->items);
-  DA_REMOVE(*buffer, index);
-
-  line0->len += growth_amount;
+	buffer->persist_col = buffer->col;
+	buffer->dirty = true;
 }
 
 void buffer_delete_before_cursor(Buffer *buffer) {
@@ -100,6 +103,69 @@ void buffer_delete_at_cursor(Buffer *buffer) {
     buffer_merge_line_down(buffer, buffer->row + 1);
 
   buffer->dirty = true;
+}
+
+void buffer_indent(Buffer *buffer) {
+  Line *line = buffer_line(buffer);
+  u32 ident_char;
+
+  if (HARD_TABS) {
+    DA_INSERT(*line, '\t', 0);
+    ident_char = '\t';
+  } else {
+    for (u32 i = 0; i < TAB_WIDTH; ++i)
+      DA_INSERT(*line, ' ', 0);
+    ident_char = ' ';
+  }
+
+  while (buffer->col < line->len && line->items[buffer->col] == ident_char)
+      buffer->col++;
+
+  buffer->persist_col = buffer->col;
+  buffer->dirty = true;
+}
+
+void buffer_unindent(Buffer *buffer) {
+  Line *line = buffer_line(buffer);
+
+  if (HARD_TABS) {
+    if (line->len > 0 && line->items[0] == '\t') {
+      DA_REMOVE(*line, 0);
+      if (buffer->col > 0)
+        buffer->col--;
+    }
+  } else {
+    for (u32 i = 0; i < TAB_WIDTH; ++i) {
+      if (line->len == 0 || line->items[0] != ' ')
+        break;
+
+      DA_REMOVE(*line, 0);
+      if (buffer->col > 0)
+        buffer->col--;
+    }
+  }
+
+  buffer->persist_col = buffer->col;
+  buffer->dirty = true;
+}
+
+void buffer_autoindent(Buffer *buffer) {
+  if (buffer->row == 0)
+    return;
+
+  Line *prev_line = buffer->items + buffer->row - 1;
+  u32 ident_char;
+
+  if (HARD_TABS)
+    ident_char = '\t';
+  else
+    ident_char = ' ';
+
+  for (u32 i = 0; i < prev_line->len &&
+         prev_line->items[i] == ident_char; ++i) {
+    DA_INSERT(*buffer_line(buffer), ident_char, 0);
+    buffer->col++;
+  }
 }
 
 void buffer_move_left(Buffer *buffer) {
@@ -129,7 +195,10 @@ void buffer_move_up(Buffer *buffer) {
     Line *prev_line = buffer_line(buffer);
 
     buffer->row--;
-    buffer->col += buffer_tab_offset_from_current_line(buffer, prev_line);
+    i32 offset = buffer_tab_offset_from_current_line(buffer, prev_line);
+    if ((i32) buffer->persist_col + offset >= 0)
+      buffer->persist_col += offset;
+
     if (buffer->persist_col > buffer_line(buffer)->len)
       buffer->col = buffer_line(buffer)->len;
     else
@@ -142,7 +211,10 @@ void buffer_move_down(Buffer *buffer) {
     Line *prev_line = buffer_line(buffer);
 
     buffer->row++;
-    buffer->col += buffer_tab_offset_from_current_line(buffer, prev_line);
+    i32 offset = buffer_tab_offset_from_current_line(buffer, prev_line);
+    if ((i32) buffer->persist_col + offset >= 0)
+      buffer->persist_col += offset;
+
     if (buffer->persist_col > buffer_line(buffer)->len)
       buffer->col = buffer_line(buffer)->len;
     else
@@ -232,48 +304,6 @@ void buffer_move_to_buffer_start(Buffer *buffer) {
 void buffer_move_to_buffer_end(Buffer *buffer) {
   buffer->row = buffer->len - 1;
   buffer_move_to_line_end(buffer);
-}
-
-void buffer_indent(Buffer *buffer) {
-  Line *line = buffer_line(buffer);
-
-  if (HARD_TABS) {
-    DA_INSERT(*line, '\t', 0);
-    while (buffer->col < line->len && line->items[buffer->col] == '\t')
-      buffer->col++;
-  } else {
-    for (u32 i = 0; i < TAB_WIDTH; ++i)
-      DA_INSERT(*line, ' ', 0);
-    while (buffer->col < line->len && line->items[buffer->col] == ' ')
-      buffer->col++;
-  }
-
-  buffer->persist_col = buffer->col;
-  buffer->dirty = true;
-}
-
-void buffer_unindent(Buffer *buffer) {
-  Line *line = buffer_line(buffer);
-
-  if (HARD_TABS) {
-    if (line->len > 0 && line->items[0] == '\t') {
-      DA_REMOVE(*line, 0);
-      if (buffer->col > 0)
-        buffer->col--;
-    }
-  } else {
-    for (u32 i = 0; i < TAB_WIDTH; ++i) {
-      if (line->len == 0 || line->items[0] != ' ')
-        break;
-
-      DA_REMOVE(*line, 0);
-      if (buffer->col > 0)
-        buffer->col--;
-    }
-  }
-
-  buffer->persist_col = buffer->col;
-  buffer->dirty = true;
 }
 
 void buffer_read_file(Buffer *buffer, char *path) {
