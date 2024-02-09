@@ -111,10 +111,12 @@ void buffer_indent(Buffer *buffer) {
 
   if (HARD_TABS) {
     DA_INSERT(*line, '\t', 0);
+    buffer->col += TAB_WIDTH;
     ident_char = '\t';
   } else {
     for (u32 i = 0; i < TAB_WIDTH; ++i)
       DA_INSERT(*line, ' ', 0);
+    buffer->col += TAB_WIDTH;
     ident_char = ' ';
   }
 
