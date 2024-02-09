@@ -41,8 +41,8 @@ void buffer_merge_line_down(Buffer *buffer, u32 index) {
   Line *line1 = buffer->items + index;
   u32 growth_amount = line1->len;
 
-  da_reserve_space(line0->items, &line0->len, &line0->cap,
-                   sizeof(u32), growth_amount);
+  da_reserve_space((void **) &line0->items, &line0->len,
+                   &line0->cap, sizeof(u32), growth_amount);
   memmove(line0->items + line0->len,
           line1->items,
           growth_amount * sizeof(u32));
