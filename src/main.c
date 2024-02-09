@@ -10,9 +10,9 @@
 #include "wstr.h"
 #include "keymap.h"
 
-#define BIND(key_)      (decoded.key & (key_)) && !decoded.ctrl && !decoded.alt
-#define BIND_CTRL(key_) (decoded.key & (key_)) &&  decoded.ctrl && !decoded.alt
-#define BIND_ALT(key_)  (decoded.key & (key_)) && !decoded.ctrl &&  decoded.alt
+#define NONE(key_) ((decoded.key & (key_)) && !decoded.ctrl && !decoded.alt)
+#define CTRL(key_) ((decoded.key & (key_)) &&  decoded.ctrl && !decoded.alt)
+#define ALT(key_)  ((decoded.key & (key_)) && !decoded.ctrl &&  decoded.alt)
 
 bool process_input(Buffer *buffer, char *file_path, u32 input) {
   if ((input >= 32 && input <= 126) || input > 127) {
