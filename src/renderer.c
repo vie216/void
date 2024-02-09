@@ -47,7 +47,7 @@ void renderer_render_line(Renderer *renderer, Buffer *buffer,
   info->len = rcol;
 }
 
-#ifndef NDEBUG
+#ifdef DEBUG
 void renderer_render_debug_info(Renderer *renderer, bool full_redraw) {
   printf("\033[%d;1H\033[K", renderer->rows - 1);
   u32 col = 0;
@@ -91,7 +91,7 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
   if (buffer->row < renderer->scroll) {
     renderer->scroll = buffer->row;
     full_redraw = true;
-#ifdef NDEBUG
+#ifndef DEBUG
   } else if (buffer->row > renderer->scroll + renderer->rows - 2) {
     renderer->scroll = buffer->row - renderer->rows + 2;
 #else
@@ -120,7 +120,7 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
       }
     }
 
-#ifdef NDEBUG
+#ifndef DEBUG
     renderer->line_infos[row].dirty = false;
 #endif
   }
@@ -129,7 +129,7 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
 
   renderer_render_status_bar(renderer, buffer);
 
-#ifndef NDEBUG
+#ifdef DEBUG
   renderer_render_debug_info(renderer, full_redraw);
   for (u32 row = 0; row < renderer->rows; ++row)
     renderer->line_infos[row].dirty = false;

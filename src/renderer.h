@@ -20,7 +20,7 @@ typedef struct {
 
 void renderer_render_line(Renderer *renderer, Buffer *buffer,
                           u32 row, bool full_redraw);
-#ifndef NDEBUG
+#ifdef DEBUG
 void renderer_render_debug_info(Renderer *renderer, bool full_redraw);
 #endif
 void renderer_render_status_bar(Renderer *renderer, Buffer *buffer);
