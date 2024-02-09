@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 
 #include "term.h"
 #include "defs.h"
@@ -10,6 +11,7 @@
 
 int main(i32 argc, char **argv) {
   term_init();
+  setlocale(LC_ALL, "");
   fputs("\033[H\033[2J", stdout);
 
   Buffer buffer = {0};
