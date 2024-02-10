@@ -3,8 +3,9 @@
 
 #include <stdbool.h>
 
-#define TAB_WIDTH 2
-#define HARD_TABS false
+#define TAB_WIDTH    2
+#define HARD_TABS    false
+#define SMART_INDENT true
 
 #define KB_QUIT           CTRL(KEY_Q)
 #define KB_SAVE           CTRL(KEY_S)

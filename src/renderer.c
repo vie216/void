@@ -6,13 +6,13 @@
 #include "config.h"
 #include "wstr.h"
 
-void renderer_render_line(Renderer *renderer, Buffer *buffer,
+void renderer_render_line(Renderer *renderer, Editor *editor,
                           u32 row, bool full_redraw) {
   LineInfo *info = renderer->line_infos + row;
-  Line *line = buffer->items + row + renderer->scroll;
+  Line *line = editor->items + row + renderer->scroll;
   u32 rcol = 0, bcol = 0;
 
-  if (row + renderer->scroll >= buffer->len)
+  if (row + renderer->scroll >= editor->len)
     goto end;
 
   while (bcol < line->len && rcol < renderer->cols) {
@@ -59,15 +59,15 @@ void renderer_render_debug_info(Renderer *renderer, bool full_redraw) {
 
 #define UINT_LEN(num) (num < 10 ? 1 : (u32) (log10(num) + 1))
 
-void renderer_render_status_bar(Renderer *renderer, Buffer *buffer) {
-  u32 row = buffer->row + 1;
-  u32 col = buffer->col + 1;
+void renderer_render_status_bar(Renderer *renderer, Editor *editor) {
+  u32 row = editor->row + 1;
+  u32 col = editor->col + 1;
   printf("\033[%d;%dH\033[2K%d:%d", renderer->rows,
          renderer->cols - UINT_LEN(row) - UINT_LEN(col) - 2,
          row, col);
 }
 
-void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
+void renderer_render_editor(Renderer *renderer, Editor *editor) {
   struct winsize ws;
   bool full_redraw = false;
 
@@ -88,22 +88,22 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
     full_redraw = true;
   }
 
-  if (buffer->row < renderer->scroll) {
-    renderer->scroll = buffer->row;
+  if (editor->row < renderer->scroll) {
+    renderer->scroll = editor->row;
     full_redraw = true;
 #ifndef DEBUG
-  } else if (buffer->row > renderer->scroll + renderer->rows - 2) {
-    renderer->scroll = buffer->row - renderer->rows + 2;
+  } else if (editor->row > renderer->scroll + renderer->rows - 2) {
+    renderer->scroll = editor->row - renderer->rows + 2;
 #else
-  } else if (buffer->row > renderer->scroll + renderer->rows - 3) {
-    renderer->scroll = buffer->row - renderer->rows + 3;
+  } else if (editor->row > renderer->scroll + renderer->rows - 3) {
+    renderer->scroll = editor->row - renderer->rows + 3;
 #endif
     full_redraw = true;
   }
 
-  if (buffer->dirty || full_redraw)
+  if (editor->dirty || full_redraw)
     for (u32 row = 0; row + 1 < renderer->rows; ++row)
-      renderer_render_line(renderer, buffer, row, full_redraw);
+      renderer_render_line(renderer, editor, row, full_redraw);
 
   fputs("\033[H", stdout);
   for (u32 row = 0; row + 1 < renderer->rows; ++row) {
@@ -125,9 +125,9 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
 #endif
   }
 
-  buffer->dirty = false;
+  editor->dirty = false;
 
-  renderer_render_status_bar(renderer, buffer);
+  renderer_render_status_bar(renderer, editor);
 
 #ifdef DEBUG
   renderer_render_debug_info(renderer, full_redraw);
@@ -136,7 +136,7 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
 #endif
 
   printf("\033[%d;%dH",
-         buffer->row - renderer->scroll + 1,
-         buffer_visual_col(buffer) + 1);
+         editor->row - renderer->scroll + 1,
+         editor_visual_col(editor) + 1);
   fflush(stdout);
 }
