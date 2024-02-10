@@ -8,8 +8,8 @@
 #define SMART_INDENT       true
 #define REMOVE_TRAILING_WS true
 
-#define KB_QUIT           CTRL(KEY_Q)
-#define KB_SAVE           CTRL(KEY_S)
+#define KB_QUIT           CTRL_CHAR('q')
+#define KB_SAVE           CTRL_CHAR('s')
 /*               Editing                */
 #define KB_NEW_LINE       NONE(KEY_ENTER)
 #define KB_DEL_PREV       NONE(KEY_BACKSPACE)

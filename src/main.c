@@ -13,63 +13,66 @@
 #define NONE(key_) ((decoded.key & (key_)) && !decoded.ctrl && !decoded.alt)
 #define CTRL(key_) ((decoded.key & (key_)) &&  decoded.ctrl && !decoded.alt)
 #define ALT(key_)  ((decoded.key & (key_)) && !decoded.ctrl &&  decoded.alt)
+#define CHAR(ch_)      ((decoded.key & KEY_CHAR) && decoded.ch == ch_ && !decoded.ctrl && !decoded.alt)
+#define CTRL_CHAR(ch_) ((decoded.key & KEY_CHAR) && decoded.ch == ch_ &&  decoded.ctrl && !decoded.alt)
+#define ALT_CHAR(ch_)  ((decoded.key & KEY_CHAR) && decoded.ch == ch_ && !decoded.ctrl &&  decoded.alt)
 
 bool process_input(Editor *editor, char *file_path, u32 input) {
-  if ((input >= 32 && input <= 126) || input > 127) {
-    editor_insert(editor, input);
-  } else {
-    Input decoded = decode_input_from_stdin(input);
-    if (decoded.key == KEY_NONE)
-      return true;
+  Input decoded = decode_input_from_stdin(input);
+  if (decoded.key == KEY_NONE)
+    return true;
 
-    if (KB_QUIT)
-      return false;
-    else if (KB_SAVE)
-      /* Not using `if` here because I just don't want to
-         put braces everywhere in this `if-else` chain
-         (ambiguous `else` or inconsistent code style otherwise) */
-      file_path ? editor_write_file(editor, file_path) : 0;
-    /*     Editing      */
-    else if (KB_NEW_LINE)
-      editor_insert_new_line(editor);
-    else if (KB_DEL_PREV)
-      editor_delete_before_cursor(editor);
-    else if (KB_DEL_PREV_WORD)
-      editor_move_left_word(editor, true);
-    else if (KB_DEL_NEXT)
-      editor_delete_at_cursor(editor);
-    else if (KB_DEL_NEXT_WORD)
-      editor_move_right_word(editor, true);
-    else if (KB_INDENT)
-      editor_indent(editor);
-    else if (KB_UNINDENT)
-      editor_unindent(editor);
-    /*    Navigation    */
-    else if (KB_LEFT)
-      editor_move_left(editor);
-    else if (KB_RIGHT)
-      editor_move_right(editor);
-    else if (KB_UP)
-      editor_move_up(editor);
-    else if (KB_DOWN)
-      editor_move_down(editor);
-    else if (KB_LEFT_WORD)
-      editor_move_left_word(editor, false);
-    else if (KB_RIGHT_WORD)
-      editor_move_right_word(editor, false);
-    else if (KB_UP_PARAGRAPH)
-      editor_move_up_paragraph(editor);
-    else if (KB_DOWN_PARAGRAPH)
-      editor_move_down_paragraph(editor);
-    else if (KB_LINE_START)
-      editor_move_to_line_start(editor);
-    else if (KB_LINE_END)
-      editor_move_to_line_end(editor);
-    else if (KB_FILE_START)
-      editor_move_to_editor_start(editor);
-    else if (KB_FILE_END)
-      editor_move_to_editor_end(editor);
-  }
+  if (KB_QUIT)
+    return false;
+
+  if (KB_SAVE)
+    /* Not using `if` here because I just don't want to
+       put braces everywhere in this `if-else` chain
+       (ambiguous `else` or inconsistent code style otherwise) */
+    file_path ? editor_write_file(editor, file_path) : 0;
+  /*     Editing      */
+  else if (KB_NEW_LINE)
+    editor_insert_new_line(editor);
+  else if (KB_DEL_PREV)
+    editor_delete_before_cursor(editor);
+  else if (KB_DEL_PREV_WORD)
+    editor_move_left_word(editor, true);
+  else if (KB_DEL_NEXT)
+    editor_delete_at_cursor(editor);
+  else if (KB_DEL_NEXT_WORD)
+    editor_move_right_word(editor, true);
+  else if (KB_INDENT)
+    editor_indent(editor);
+  else if (KB_UNINDENT)
+    editor_unindent(editor);
+  /*    Navigation    */
+  else if (KB_LEFT)
+    editor_move_left(editor);
+  else if (KB_RIGHT)
+    editor_move_right(editor);
+  else if (KB_UP)
+    editor_move_up(editor);
+  else if (KB_DOWN)
+    editor_move_down(editor);
+  else if (KB_LEFT_WORD)
+    editor_move_left_word(editor, false);
+  else if (KB_RIGHT_WORD)
+    editor_move_right_word(editor, false);
+  else if (KB_UP_PARAGRAPH)
+    editor_move_up_paragraph(editor);
+  else if (KB_DOWN_PARAGRAPH)
+    editor_move_down_paragraph(editor);
+  else if (KB_LINE_START)
+    editor_move_to_line_start(editor);
+  else if (KB_LINE_END)
+    editor_move_to_line_end(editor);
+  else if (KB_FILE_START)
+    editor_move_to_editor_start(editor);
+  else if (KB_FILE_END)
+    editor_move_to_editor_end(editor);
+  else if (decoded.key == KEY_CHAR)
+    if ((input >= 32 && input <= 126) || input > 127)
+      editor_insert(editor, input);
 
   return true;
 }
