@@ -59,6 +59,7 @@ Input decode_input_from_stdin(u8 ch) {
   case 'C': return (Input) { KEY_RIGHT, ctrl, alt };
   case 'A': return (Input) { KEY_UP, ctrl, alt };
   case 'B': return (Input) { KEY_DOWN, ctrl, alt };
+  case '~':
   case 'P': return (Input) { KEY_DELETE, ctrl, alt };
   case 'M': return (Input) { KEY_DELETE, true, alt };
   case 'Z': return (Input) { KEY_BACKTAB, ctrl, alt };
