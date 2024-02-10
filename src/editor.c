@@ -171,6 +171,29 @@ void editor_smart_indent(Editor *editor) {
 }
 #endif
 
+#if REMOVE_TRAILING_WS
+void editor_remove_trailing_whitespace(Editor *editor) {
+  for (u32 i = 0; i < editor->len; ++i) {
+    Line *line = editor->items + i;
+    u32 ws_len = 0;
+
+    while (ws_len < line->len) {
+      if (!iswspace(line->items[line->len - ws_len - 1]))
+        break;
+      ws_len++;
+    }
+
+    line->len -= ws_len;
+  }
+
+  if (editor->col  > editor->items[editor->row].len) {
+    editor->col = editor->items[editor->row].len;
+    editor->persist_col = editor->col;
+    editor->dirty = true;
+  }
+}
+#endif
+
 void editor_move_left(Editor *editor) {
   if (editor->col > 0) {
     editor->col--;
@@ -337,13 +360,16 @@ void editor_read_file(Editor *editor, char *path) {
     }
   }
 
-  editor->dirty = true;
   free(file_content);
+  editor->dirty = true;
 }
 
 void editor_write_file(Editor *editor, char *path) {
-  FILE *file = fopen(path, "w");
+#if REMOVE_TRAILING_WS
+  editor_remove_trailing_whitespace(editor);
+#endif
 
+  FILE *file = fopen(path, "w");
   for (u32 row = 0; row < editor->len; ++row) {
     if (row != 0)
       putc('\n', file);
@@ -352,6 +378,5 @@ void editor_write_file(Editor *editor, char *path) {
     for (u32 col = 0; col < line->len; ++col)
       wputc(line->items[col], file);
   }
-
   fclose(file);
 }

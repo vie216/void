@@ -29,8 +29,11 @@ void  editor_delete_before_cursor(Editor *editor);
 void  editor_delete_at_cursor(Editor *editor);
 void  editor_indent(Editor *editor);
 void  editor_unindent(Editor *editor);
-#if SMART_INDENT 
+#if SMART_INDENT
 void  editor_smart_indent(Editor *editor);
+#endif
+#if REMOVE_TRAILING_WS
+void  editor_remove_trailing_whitespace(Editor *editor);
 #endif
 void  editor_move_left(Editor *editor);
 void  editor_move_right(Editor *editor);
