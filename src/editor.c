@@ -75,7 +75,9 @@ void editor_insert_new_line(Editor *editor) {
           rest_len * sizeof(u32));
 
   editor->col = 0;
+#if SMART_INDENT
   editor_smart_indent(editor);
+#endif
 
 	editor->persist_col = editor->col;
 	editor->dirty = true;
