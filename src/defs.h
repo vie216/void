@@ -30,16 +30,16 @@
 
 #define DA_REMOVE(da, index) DA_REMOVE_REPEAT(da, 1, index)
 
-#define DA_REMOVE_REPEAT(da, amount, index)       \
-  do {                                            \
-    u32 size = sizeof((da).items[0]);             \
-      if ((da).len >= (amount)) {                 \
-        if ((index) + (amount) != (da).len)       \
-          memcpy((da).items + (index),            \
-                 (da).items + (index) + (amount), \
-                 size * ((da).len - (index)));    \
-        (da).len -= amount;                       \
-      }                                           \
+#define DA_REMOVE_REPEAT(da, amount, index)     \
+  do {                                          \
+    u32 size = sizeof((da).items[0]);           \
+    if ((index) + (amount) <= (da).len) {       \
+      if ((index) + (amount) != (da).len)       \
+        memcpy((da).items + (index),            \
+               (da).items + (index) + (amount), \
+               size * ((da).len - (index)));    \
+      (da).len -= amount;                       \
+    }                                           \
   } while (0)
 
 typedef signed char    i8;

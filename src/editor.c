@@ -38,17 +38,21 @@ i32 editor_tab_offset_from_current_line(Editor *editor, Line *line) {
 void editor_merge_line_down(Editor *editor, u32 index) {
   Line *line0 = editor->items + index - 1;
   Line *line1 = editor->items + index;
-  u32 growth_amount = line1->len;
+  /*Line *line2 = editor->items + index + 1;
+
+  DA_INSERT(*editor, (Line) {0}, index - 1);
+  da_reserve_space((void **) &line0->items, &line0->len,
+                   &line0->cap, sizeof(u32), line1->len + line2->len);*/
 
   da_reserve_space((void **) &line0->items, &line0->len,
-                   &line0->cap, sizeof(u32), growth_amount);
+                   &line0->cap, sizeof(u32), line1->len);
   memmove(line0->items + line0->len,
           line1->items,
-          growth_amount * sizeof(u32));
+          line1->len * sizeof(u32));
+  line0->len += line1->len;
+
   free(line1->items);
   DA_REMOVE(*editor, index);
-
-  line0->len += growth_amount;
 }
 
 void editor_insert(Editor *editor, u32 input) {
@@ -86,23 +90,25 @@ void editor_delete_before_cursor(Editor *editor) {
   if (editor->col > 0) {
     editor->col--;
     DA_REMOVE(*editor_line(editor), editor->col);
+    editor->persist_col = editor->col;
+    editor->dirty = true;
   } else if (editor->row > 0) {
     editor->col = editor->items[editor->row - 1].len;
     editor_merge_line_down(editor, editor->row);
     editor->row--;
+    editor->persist_col = editor->col;
+    editor->dirty = true;
   }
-
-  editor->persist_col = editor->col;
-  editor->dirty = true;
 }
 
 void editor_delete_at_cursor(Editor *editor) {
-  if (editor->col < editor_line(editor)->len)
+  if (editor->col < editor_line(editor)->len) {
     DA_REMOVE(*editor_line(editor), editor->col);
-  else if (editor->row + 1 < editor->len)
+    editor->dirty = true;
+  } else if (editor->row + 1 < editor->len) {
     editor_merge_line_down(editor, editor->row + 1);
-
-  editor->dirty = true;
+    editor->dirty = true;
+  }
 }
 
 void editor_indent(Editor *editor) {
@@ -333,21 +339,20 @@ void editor_move_to_editor_end(Editor *editor) {
 }
 
 void editor_read_file(Editor *editor, char *path) {
-  u32  file_len = 0;
+  u32 file_len = 0;
   u8 *file_content = read_file(path, &file_len);
-  u32  line_start = 0;
 
   if (!file_content) {
     DA_APPEND(*editor, (Line) {0});
     return;
   }
 
+  u32 line_start = 0;
   for (u32 i = 0; i <= file_len; ++i) {
     if (file_content[i] == '\n' || i == file_len) {
-      u32 line_len = i - line_start;
       WStr wstr = utow((Str) {
           .ptr = file_content + line_start,
-          .len = line_len,
+          .len = i - line_start,
         });
       Line line = (Line) {
         .items = wstr.ptr,
