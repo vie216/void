@@ -38,11 +38,6 @@ i32 editor_tab_offset_from_current_line(Editor *editor, Line *line) {
 void editor_merge_line_down(Editor *editor, u32 index) {
   Line *line0 = editor->items + index - 1;
   Line *line1 = editor->items + index;
-  /*Line *line2 = editor->items + index + 1;
-
-  DA_INSERT(*editor, (Line) {0}, index - 1);
-  da_reserve_space((void **) &line0->items, &line0->len,
-                   &line0->cap, sizeof(u32), line1->len + line2->len);*/
 
   da_reserve_space((void **) &line0->items, &line0->len,
                    &line0->cap, sizeof(u32), line1->len);
