@@ -1,11 +1,9 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <locale.h>
 
 #include "term.h"
 #include "defs.h"
 #include "editor.h"
-#include "config.h"
 #include "renderer.h"
 #include "wstr.h"
 #include "keymap.h"
@@ -67,9 +65,9 @@ bool process_input(Editor *editor, char *file_path, u32 input) {
   else if (KB_LINE_END)
     editor_move_to_line_end(editor);
   else if (KB_FILE_START)
-    editor_move_to_editor_start(editor);
+    editor_move_to_buffer_start(editor);
   else if (KB_FILE_END)
-    editor_move_to_editor_end(editor);
+    editor_move_to_buffer_end(editor);
   else if (decoded.key == KEY_CHAR)
     if ((input >= 32 && input <= 126) || input > 127)
       editor_insert(editor, input);

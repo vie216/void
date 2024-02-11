@@ -45,8 +45,8 @@ void  editor_move_up_paragraph(Editor *editor);
 void  editor_move_down_paragraph(Editor *editor);
 void  editor_move_to_line_start(Editor *editor);
 void  editor_move_to_line_end(Editor *editor);
-void  editor_move_to_editor_start(Editor *editor);
-void  editor_move_to_editor_end(Editor *editor);
+void  editor_move_to_buffer_start(Editor *editor);
+void  editor_move_to_buffer_end(Editor *editor);
 void  editor_read_file(Editor *editor, char *path);
 void  editor_write_file(Editor *editor, char *path);
 

@@ -325,12 +325,12 @@ void editor_move_to_line_end(Editor *editor) {
   editor->persist_col = editor->col;
 }
 
-void editor_move_to_editor_start(Editor *editor) {
+void editor_move_to_buffer_start(Editor *editor) {
   editor->row = 0;
   editor_move_to_line_start(editor);
 }
 
-void editor_move_to_editor_end(Editor *editor) {
+void editor_move_to_buffer_end(Editor *editor) {
   editor->row = editor->len - 1;
   editor_move_to_line_end(editor);
 }
