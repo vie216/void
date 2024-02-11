@@ -7,7 +7,7 @@ void da_reserve_space(void **items, u32 *len, u32 *cap, u32 size, u32 amount) {
         *cap *= 2;
       *items = realloc(*items, size * *cap);
     } else {
-      *cap = 1;
+      *cap = amount;
       *items = malloc(size * *cap);
     }
   }
