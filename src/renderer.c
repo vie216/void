@@ -10,28 +10,28 @@ void renderer_render_line(Renderer *renderer, Editor *editor,
                           u32 row, bool full_redraw) {
   LineInfo *info = renderer->line_infos + row;
   Line *line = editor->items + row + renderer->scroll;
-  u32 rcol = 0, bcol = 0;
+  u32 rcol = 0, ecol = 0;
 
   if (row + renderer->scroll >= editor->len)
     goto end;
 
-  while (bcol < line->len && rcol < renderer->cols) {
+  while (ecol < line->len && rcol < renderer->cols) {
     u32 offset = row * renderer->cols + rcol;
 
-    if (line->items[bcol] == '\t') {
+    if (line->items[ecol] == '\t') {
       for (u32 i = 0; i < TAB_WIDTH &&
              i + offset < renderer->cap; ++i)
         renderer->buffer[i + offset] = ' ';
       rcol += TAB_WIDTH;
     } else {
-      if (line->items[bcol] != renderer->buffer[offset]) {
+      if (line->items[ecol] != renderer->buffer[offset]) {
         info->dirty = true;
-        renderer->buffer[offset] = line->items[bcol];
+        renderer->buffer[offset] = line->items[ecol];
       }
       rcol++;
     }
 
-    bcol++;
+    ecol++;
   }
 
  end:
