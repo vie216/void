@@ -62,9 +62,16 @@ void renderer_render_debug_info(Renderer *renderer, bool full_redraw) {
 void renderer_render_status_bar(Renderer *renderer, Editor *editor) {
   u32 row = editor->row + 1;
   u32 col = editor->col + 1;
-  printf("\033[%d;%dH\033[2K%d:%d", renderer->rows,
-         renderer->cols - UINT_LEN(row) - UINT_LEN(col) - 2,
+  u32 offset = renderer->cols - UINT_LEN(row) - UINT_LEN(col) - 2;
+
+  if (editor->file_path)
+    offset -= strlen(editor->file_path) + 2;
+
+  printf("\033[%d;%dH\033[2K%d:%d",
+         renderer->rows, offset,
          row, col);
+  if (editor->file_path)
+    printf("  %s", editor->file_path);
 }
 
 void renderer_render_editor(Renderer *renderer, Editor *editor) {

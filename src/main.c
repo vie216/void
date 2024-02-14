@@ -15,7 +15,7 @@
 #define CTRL_CHAR(ch_) ((decoded.key & KEY_CHAR) && decoded.ch == ch_ &&  decoded.ctrl && !decoded.alt)
 #define ALT_CHAR(ch_)  ((decoded.key & KEY_CHAR) && decoded.ch == ch_ && !decoded.ctrl &&  decoded.alt)
 
-bool process_input(Editor *editor, char *file_path, u32 input) {
+bool process_input(Editor *editor, u32 input) {
   Input decoded = decode_input_from_stdin(input);
   if (decoded.key == KEY_NONE)
     return true;
@@ -23,11 +23,9 @@ bool process_input(Editor *editor, char *file_path, u32 input) {
   if (KB_QUIT)
     return false;
 
+  /*     General      */
   if (KB_SAVE)
-    /* Not using `if` here because I just don't want to
-       put braces everywhere in this `if-else` chain
-       (ambiguous `else` or inconsistent code style otherwise) */
-    file_path ? editor_write_file(editor, file_path) : 0;
+    editor_write_file(editor);
   /*     Editing      */
   else if (KB_NEW_LINE)
     editor_insert_new_line(editor);
@@ -94,7 +92,7 @@ int main(i32 argc, char **argv) {
   u32 input;
   renderer_render_editor(&renderer, &editor);
   while ((input = wgetc(stdin)) != (u32) EOF) {
-    if (!process_input(&editor, file_path, input))
+    if (!process_input(&editor, input))
       break;
     renderer_render_editor(&renderer, &editor);
   }

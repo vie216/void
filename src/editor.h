@@ -17,6 +17,7 @@ typedef struct {
   u32   row, col;
   u32   persist_col;
   bool  dirty;
+  char *file_path;
 } Editor;
 
 Line *editor_line(Editor *editor);
@@ -48,6 +49,6 @@ void  editor_move_to_line_end(Editor *editor);
 void  editor_move_to_buffer_start(Editor *editor);
 void  editor_move_to_buffer_end(Editor *editor);
 void  editor_read_file(Editor *editor, char *path);
-void  editor_write_file(Editor *editor, char *path);
+void  editor_write_file(Editor *editor);
 
 #endif // BUFFER_H

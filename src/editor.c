@@ -366,14 +366,18 @@ void editor_read_file(Editor *editor, char *path) {
 
   free(file_content);
   editor->dirty = true;
+  editor->file_path = path;
 }
 
-void editor_write_file(Editor *editor, char *path) {
+void editor_write_file(Editor *editor) {
 #if REMOVE_TRAILING_WS
   editor_remove_trailing_whitespace(editor);
 #endif
 
-  FILE *file = fopen(path, "w");
+  if (!editor->file_path)
+    return;
+
+  FILE *file = fopen(editor->file_path, "w");
   for (u32 row = 0; row < editor->len; ++row) {
     if (row != 0)
       putc('\n', file);

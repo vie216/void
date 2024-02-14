@@ -8,6 +8,7 @@
 #define SMART_INDENT       true
 #define REMOVE_TRAILING_WS true
 
+/*               General                */
 #define KB_QUIT           CTRL_CHAR('q')
 #define KB_SAVE           CTRL_CHAR('s')
 /*               Editing                */
