@@ -114,7 +114,7 @@ void editor_indent(Editor *editor) {
 
   if (HARD_TABS) {
     DA_INSERT(*line, '\t', 0);
-    editor->col += TAB_WIDTH;
+    editor->col += 1;
     ident_char = '\t';
   } else {
     DA_INSERT_REPEAT(*line, ' ', TAB_WIDTH, 0);
@@ -140,8 +140,10 @@ void editor_unindent(Editor *editor) {
     }
   } else {
     u32 i = 0;
-    while (i < TAB_WIDTH && i < line->len &&
-             line->items[0] == ' ') i++;
+    while (i < TAB_WIDTH &&
+           i < line->len &&
+           line->items[i] == ' ')
+      i++;
     DA_REMOVE_REPEAT(*line, i, 0);
     if (i < editor->col)
       editor->col = editor->col - i;
