@@ -341,6 +341,8 @@ void editor_read_file(Editor *editor, char *path) {
   u32 file_len = 0;
   u8 *file_content = read_file(path, &file_len);
 
+  editor->file_path = path;
+
   if (!file_content) {
     DA_APPEND(*editor, (Line) {0});
     return;
@@ -366,7 +368,6 @@ void editor_read_file(Editor *editor, char *path) {
 
   free(file_content);
   editor->dirty = true;
-  editor->file_path = path;
 }
 
 void editor_write_file(Editor *editor) {
