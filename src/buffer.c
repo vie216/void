@@ -259,7 +259,7 @@ void buffer_move_left_word(Buffer *buffer, bool delete) {
   while (buffer->col > 0) {
     u32 ch = buffer_line(buffer)->items[buffer->col - 1];
     bool is_word = iswalnum(ch);
-    if (!is_word && found_word)
+    if (found_word && !is_word)
       break;
 
     found_word |= is_word;
@@ -276,7 +276,7 @@ void buffer_move_right_word(Buffer *buffer, bool delete) {
   while (buffer->col < buffer_line(buffer)->len) {
     u32 ch = buffer_line(buffer)->items[buffer->col];
     bool is_word = iswalnum(ch);
-    if (!is_word && found_word)
+    if (found_word && !is_word)
       break;
 
     found_word |= is_word;
