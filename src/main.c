@@ -80,14 +80,11 @@ int main(i32 argc, char **argv) {
 
   Editor editor = {0};
   Renderer renderer = {0};
-  char *file_path = NULL;
 
-  if (argc > 1) {
-    file_path = argv[1];
-    editor_read_file(&editor, file_path);
-  } else {
+  if (argc > 1)
+    editor_read_file(&editor, argv[1]);
+  else
     DA_APPEND(editor, ((Line) {0}));
-  }
 
   u32 input;
   renderer_render_editor(&renderer, &editor);
