@@ -7,6 +7,7 @@
 #include "renderer.h"
 #include "wstr.h"
 #include "keymap.h"
+#include "da.h"
 
 #define NONE(key_) ((decoded.key & (key_)) && !decoded.ctrl && !decoded.alt)
 #define CTRL(key_) ((decoded.key & (key_)) &&  decoded.ctrl && !decoded.alt)

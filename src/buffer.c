@@ -4,6 +4,7 @@
 #include "buffer.h"
 #include "fs.h"
 #include "wstr.h"
+#include "da.h"
 
 Line *buffer_line(Buffer *buffer) {
   return buffer->items + buffer->row;
