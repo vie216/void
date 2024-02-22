@@ -57,12 +57,21 @@ void renderer_render_debug_info(Renderer *renderer, bool full_redraw) {
 }
 #endif
 
-#define UINT_LEN(num) (num < 10 ? 1 : (u32) (log10(num) + 1))
+static u32 u32_len(u32 num) {
+  u32 len = 1;
+
+  while (num >= 10) {
+    num /= 10;
+    len++;
+  }
+
+  return len;
+}
 
 void renderer_render_status_bar(Renderer *renderer, Buffer *buffer) {
   u32 row = buffer->row + 1;
   u32 col = buffer->col + 1;
-  u32 offset = renderer->cols - UINT_LEN(row) - UINT_LEN(col) - 2;
+  u32 offset = renderer->cols - u32_len(row) - u32_len(col) - 2;
 
   if (buffer->file_path)
     offset -= strlen(buffer->file_path) + 2;
