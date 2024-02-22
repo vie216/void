@@ -75,8 +75,8 @@ bool process_input(Buffer *buffer, u32 input) {
 }
 
 int main(i32 argc, char **argv) {
-  term_init();
   setlocale(LC_ALL, "");
+  term_init();
   fputs("\033[H\033[2J", stdout);
 
   Buffer buffer = {0};
