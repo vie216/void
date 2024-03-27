@@ -2,7 +2,6 @@
 #include <wctype.h>
 
 #include "buffer.h"
-#include "fs.h"
 #include "wstr.h"
 #include "da.h"
 
@@ -339,15 +338,23 @@ void buffer_move_to_buffer_end(Buffer *buffer) {
 }
 
 void buffer_read_file(Buffer *buffer, char *path) {
-  u32 file_len = 0;
-  u8 *file_content = read_file(path, &file_len);
+  u32 file_len;
+  u8 *file_content;
 
   buffer->file_path = path;
 
-  if (!file_content) {
+  FILE *file = fopen(path, "r");
+  if (!file) {
     DA_APPEND(*buffer, (Line) {0});
     return;
   }
+
+  fseek(file, 0, SEEK_END);
+  file_len = ftell(file);
+  file_content = malloc(file_len);
+  fseek(file, 0, SEEK_SET);
+  fread(file_content, 1, file_len, file);
+  fclose(file);
 
   u32 line_start = 0;
   for (u32 i = 0; i <= file_len; ++i) {
