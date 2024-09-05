@@ -387,6 +387,9 @@ void buffer_write_file(Buffer *buffer) {
     return;
 
   FILE *file = fopen(buffer->file_path, "w");
+  if (!file)
+    return;
+
   for (u32 row = 0; row < buffer->len; ++row) {
     if (row != 0)
       putc('\n', file);
