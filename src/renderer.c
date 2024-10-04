@@ -78,7 +78,12 @@ void renderer_render_status_bar(Renderer *renderer, Buffer *buffer) {
   if (buffer->file_path)
     offset -= strlen(buffer->file_path) + 2;
 
-  printf("\033[%d;%dH\033[2K%d:%d",
+  printf("\033[%dH\033[2K ", renderer->rows);
+
+  if (buffer->message)
+      fputs(buffer->message, stdout);
+
+  printf("\033[%d;%dH%d:%d",
          renderer->rows, offset,
          row, col);
   if (buffer->file_path)

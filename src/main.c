@@ -16,6 +16,10 @@
 #define CTRL_CHAR(ch_) ((decoded.key & KEY_CHAR) && decoded.ch == ch_ &&  decoded.ctrl && !decoded.alt)
 #define ALT_CHAR(ch_)  ((decoded.key & KEY_CHAR) && decoded.ch == ch_ && !decoded.ctrl &&  decoded.alt)
 
+#define ACTIONS_LIMIT 3
+
+static u32 actions = 0;
+
 bool process_input(Buffer *buffer, u32 input) {
   Input decoded = decode_input_from_stdin(input);
   if (decoded.key == KEY_NONE)
@@ -24,26 +28,29 @@ bool process_input(Buffer *buffer, u32 input) {
   if (KB_QUIT)
     return false;
 
-  /*     General      */
-  if (KB_SAVE)
+  if (KB_SAVE) {
     buffer_write_file(buffer);
-  /*     Editing      */
-  else if (KB_NEW_LINE)
+    actions = 0;
+  } else if (KB_NEW_LINE) {
     buffer_insert_new_line(buffer);
-  else if (KB_DEL_PREV)
+    actions++;
+  } else if (KB_DEL_PREV) {
     buffer_delete_before_cursor(buffer);
-  else if (KB_DEL_PREV_WORD)
+    actions++;
+  } else if (KB_DEL_PREV_WORD) {
     buffer_move_left_word(buffer, true);
-  else if (KB_DEL_NEXT)
+  } else if (KB_DEL_NEXT) {
     buffer_delete_at_cursor(buffer);
-  else if (KB_DEL_NEXT_WORD)
+    actions++;
+  } else if (KB_DEL_NEXT_WORD) {
     buffer_move_right_word(buffer, true);
-  else if (KB_INDENT)
+    actions++;
+  } else if (KB_INDENT) {
     buffer_indent(buffer);
-  else if (KB_UNINDENT)
+  } else if (KB_UNINDENT) {
     buffer_unindent(buffer);
-  /*    Navigation    */
-  else if (KB_LEFT)
+    actions++;
+  } else if (KB_LEFT)
     buffer_move_left(buffer);
   else if (KB_RIGHT)
     buffer_move_right(buffer);
@@ -67,9 +74,12 @@ bool process_input(Buffer *buffer, u32 input) {
     buffer_move_to_buffer_start(buffer);
   else if (KB_FILE_END)
     buffer_move_to_buffer_end(buffer);
-  else if (decoded.key == KEY_CHAR)
-    if ((input >= 32 && input <= 126) || input > 127)
+  else if (decoded.key == KEY_CHAR) {
+    if ((input >= 32 && input <= 126) || input > 127) {
       buffer_insert(buffer, input);
+      actions++;
+    }
+  }
 
   return true;
 }
@@ -82,6 +92,8 @@ int main(i32 argc, char **argv) {
   Buffer buffer = {0};
   Renderer renderer = {0};
 
+  buffer.message = "";
+
   if (argc > 1)
     buffer_read_file(&buffer, argv[1]);
   else
@@ -92,6 +104,8 @@ int main(i32 argc, char **argv) {
   while ((input = wgetc(stdin)) != (u32) EOF) {
     if (!process_input(&buffer, input))
       break;
+    if (actions >= ACTIONS_LIMIT)
+      buffer.message = "";
     renderer_render_buffer(&renderer, &buffer);
   }
 

@@ -346,6 +346,7 @@ void buffer_read_file(Buffer *buffer, char *path) {
   FILE *file = fopen(path, "r");
   if (!file) {
     DA_APPEND(*buffer, (Line) {0});
+    buffer->message = "error opening file";
     return;
   }
 
@@ -383,12 +384,16 @@ void buffer_write_file(Buffer *buffer) {
   buffer_remove_trailing_whitespace(buffer);
 #endif
 
-  if (!buffer->file_path)
+  if (!buffer->file_path) {
+    buffer->message = "no opened file";
     return;
+  }
 
   FILE *file = fopen(buffer->file_path, "w");
-  if (!file)
+  if (!file) {
+    buffer->message = "error saving file";
     return;
+  }
 
   for (u32 row = 0; row < buffer->len; ++row) {
     if (row != 0)
@@ -399,4 +404,6 @@ void buffer_write_file(Buffer *buffer) {
       wputc(line->items[col], file);
   }
   fclose(file);
+
+  buffer->message = "saved";
 }
