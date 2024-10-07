@@ -16,6 +16,7 @@ typedef struct {
   LineInfo *line_infos;
   u32       rows, cols, cap;
   u32       scroll;
+  u32       prev_buffer_row;
 } Renderer;
 
 void renderer_render_line(Renderer *renderer, Buffer *buffer,

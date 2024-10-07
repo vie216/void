@@ -133,20 +133,29 @@ void renderer_render_buffer(Renderer *renderer, Buffer *buffer) {
     if (row != 0)
       putchar('\n');
 
-    if (renderer->line_infos[row].dirty || full_redraw) {
-      fputs("\033[K", stdout);
+    if (row + renderer->scroll == buffer->row)
+      fputs("\033[437;40m", stdout);
+    if (row + renderer->scroll == buffer->row ||
+        (row + renderer->scroll == renderer->prev_buffer_row &&
+        buffer->row != renderer->prev_buffer_row) ||
+        renderer->line_infos[row].dirty ||
+        full_redraw) {
       for (u32 col = 0; col < renderer->cols; ++col) {
         u32 ch = renderer->buffer[row * renderer->cols + col];
         if (ch == 0)
-          break;
+          ch = ' ';
         wputc(ch, stdout);
       }
+      fputs("\033[0m", stdout);
     }
 
 #ifndef DEBUG
     renderer->line_infos[row].dirty = false;
 #endif
   }
+  fputs("\033[0m", stdout);
+
+  renderer->prev_buffer_row = buffer->row;
 
   buffer->dirty = false;
 
