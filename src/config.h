@@ -5,7 +5,7 @@
 
 #define TAB_WIDTH          2
 #define HARD_TABS          false
-#define SMART_INDENT       true
+#define SMART_INDENT       false
 #define REMOVE_TRAILING_WS true
 
 /*               General                */
